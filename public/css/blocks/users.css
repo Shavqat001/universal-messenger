@@ -1,0 +1,189 @@
+.users {
+    min-width: 290px;
+    height: 100vh;
+    background-color: var(--dark-blue);
+    z-index: 1;
+    resize: horizontal;
+    overflow-x: auto;
+    box-sizing: border-box;
+    position: relative;
+}
+
+.users::-webkit-scrollbar {
+    display: none;
+}
+
+.users__light--theme {
+    background-color: var(--light);
+}
+
+.users__settings-menu {
+    border: none;
+    font-size: 26px;
+    color: #fff;
+    background-color: transparent;
+    font-weight: 900;
+    border-radius: 5px;
+    cursor: pointer;
+    outline: none;
+    display: flex;
+    align-items: center;
+    margin-right: 10px;
+    transition: 200ms;
+    padding: 2px 10px;
+    appearance: none;
+}
+
+.users__settings-menu:hover {
+    background-color: #fff;
+    color: #333;
+}
+
+.users__settings-menu--light {
+    color: #333;
+}
+
+.users__settings-menu--light:hover {
+    color: #fff;
+    background-color: #333;
+}
+
+.users>div {
+    display: flex;
+    align-items: center;
+    margin: 20px 0;
+    padding-right: 15px;
+    padding-left: 15px;
+}
+
+.users__search {
+    width: calc(100% - 60px);
+    background-color: rgba(255, 255, 255, 0.06);
+    border-radius: 50px;
+    border: none;
+    padding: 10px 20px;
+    border-bottom: 2px solid #fff5;
+    color: #fff;
+    outline: none;
+}
+
+.users__search--light {
+    background-color: #ddd;
+    color: #333;
+}
+
+.users__list {
+    list-style: none;
+}
+
+.users__list::-webkit-scrollbar {
+    display: none;
+}
+
+.users__item {
+    display: flex;
+    padding: 15px;
+    cursor: pointer;
+    transition: 100ms;
+    align-items: center;
+    margin-left: 10px;
+    border-radius: 4px;
+    position: relative;
+}
+
+.users__item--light :is(.users__name, .users__text) {
+    color: #333;
+}
+
+.users__item--light:hover {
+    background-color: #0002 !important;
+}
+
+.users__item:hover {
+    background-color: rgba(255, 255, 255, 0.1);
+}
+
+.users__item--active {
+    background-color: rgba(255, 255, 255, 0.1);
+}
+
+.users__item--light.users__item--active {
+    background-color: #0001 !important;
+}
+
+.users__item--active::before {
+    content: '';
+    width: 3px;
+    height: 40px;
+    border-radius: 5px;
+    background-color: var(--basic-blue);
+    position: absolute;
+    left: 0px;
+}
+
+.users__picture {
+    min-width: 50px;
+    height: 50px;
+    border-radius: 50%;
+    overflow: hidden;
+    margin-right: 10px;
+    position: relative;
+}
+
+.users__platform-icon {
+    position: absolute;
+    top: 10px;
+    right: 10px;
+}
+
+.users__info {
+    color: #fff;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    position: relative;
+}
+
+.users__name {
+    font-size: 16px;
+    margin-bottom: 5px;
+    color: #fff;
+}
+
+.users__name--light {
+    color: #222;
+}
+
+.users__text {
+    text-wrap: nowrap;
+    color: var(--grey);
+    width: 140px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.users__logout {
+    background-color: transparent;
+    border: none;
+    color: tomato;
+    position: absolute;
+    bottom: 10px;
+    left: 10px;
+    cursor: pointer;
+    transition: 200ms;
+    border-radius: 7px;
+    display: flex;
+    align-items: center;
+    padding: 6px 10px;
+}
+
+.users__logout svg {
+    margin-left: 8px;
+    margin-right: 8px;
+}
+
+.users__logout:hover {
+    color: #fff;
+    background-color: tomato;
+}

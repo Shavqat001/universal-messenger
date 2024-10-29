@@ -1,0 +1,217 @@
+.messages {
+    width: 100%;
+    height: 100vh;
+    background: url('../../img/background.jpg') 50% / 100%,
+        linear-gradient(to top left, rgb(3, 47, 90), rgba(44, 10, 4, 0.74));
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+}
+
+.messages--light {
+    background: url('../../img/white-bg.jpg') 50% / 100%,
+        linear-gradient(to bottom right, rgb(88, 92, 97),
+            rgba(214, 214, 214, 0.74));
+}
+
+.message__select_chat {
+    border-radius: 50px;
+    background-color: var(--basic-grey);
+    padding: 7px 17px;
+    color: #fff;
+    justify-self: center;
+    align-self: center;
+}
+
+.message__wrapper_list {
+    width: 80%;
+    height: 90vh;
+    margin: 0 auto;
+    overflow-y: auto;
+    overflow-x: hidden;
+}
+
+.message__wrapper_list::-webkit-scrollbar {
+    display: none;
+}
+
+.messages__list {
+    margin: 30px auto;
+    margin-bottom: 20px;
+    color: #fff;
+    font-size: 18px;
+    list-style: none;
+    display: flex;
+    flex-direction: column;
+}
+
+.messages__item {
+    padding: 5px 20px;
+    background-color: var(--basic-grey);
+    border-radius: 15px;
+    align-self: flex-start;
+    max-width: 300px;
+    word-wrap: break-word;
+    position: relative;
+    overflow: visible;
+}
+
+.messages__item:not(:last-child) {
+    margin-bottom: 15px;
+}
+
+.messages__item_telegram,
+.messages__item_whatsapp {
+    border-radius: 10px 10px 10px 0px;
+}
+
+.messages__item_bot {
+    border-radius: 10px 10px 0px 10px;
+    align-self: flex-end;
+}
+
+.messages__item_bot .messages__item_tail {
+    background-color: var(--basic-grey);
+    right: -12px;
+}
+
+.messages__item_tail {
+    width: 12px;
+    height: 12px;
+    position: absolute;
+    bottom: 0px;
+    z-index: 2;
+    clip-path: polygon(9% 28%, 21% 53%, 35% 69%, 54% 82%, 74% 93%, 100% 100%, 0 100%, 0 0);
+}
+
+.messages__item_telegram {
+    background-color: dodgerblue;
+}
+
+.messages__item_telegram .messages__item_tail {
+    transform: rotateY(180deg);
+    background-color: dodgerblue;
+    left: -12px;
+}
+
+.messages__item_whatsapp {
+    background-color: #41b883;
+}
+
+.messages__item_whatsapp .messages__item_tail {
+    transform: rotateY(180deg);
+    background-color: #41b883;
+    left: -12px;
+}
+
+.messages__form {
+    display: flex;
+    align-items: center;
+    background-color: var(--dark-blue);
+    color: #fff;
+    padding: 14px;
+    min-width: calc(100% - 290px);
+}
+
+.messages__form--light,
+.messages__form--light .messages__field_text,
+.messages__form--light .messages__send_button {
+    background-color: #fff;
+    color: #333;
+}
+
+.messages__field_text {
+    flex-grow: 3;
+    display: flex;
+    align-items: center;
+}
+
+.messages__field_text svg {
+    cursor: pointer;
+}
+
+.messages__field_text input {
+    width: 100%;
+    border: none;
+    padding: 14px;
+    background-color: transparent;
+    outline: none;
+    word-break: break-word;
+    overflow: auto;
+}
+
+.messages__smile-icons {
+    width: 20px;
+    max-width: 20px;
+    height: 20px;
+    border-radius: 50px;
+    margin-right: 10px;
+    cursor: pointer;
+    transition: 300ms;
+    display: flex;
+    overflow-x: scroll;
+    background-color: transparent;
+    padding: 5px 0;
+    align-items: center;
+}
+
+.messages__smile-icons::-webkit-scrollbar {
+    display: none;
+}
+
+.messages__smile-icons svg {
+    max-width: 20px;
+    min-width: 20px;
+    margin-right: 5px;
+}
+
+.messages__smile-icons:hover {
+    width: 130px;
+    max-width: 130px;
+    padding: 0 5px;
+}
+
+.messages__send_button {
+    width: 20px;
+    height: 20px;
+    background-color: transparent;
+    border: none;
+    padding: 0;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    color: var(--basic-blue);
+    cursor: pointer;
+}
+
+.new-message-indicator {
+    display: none;
+    width: 13px;
+    height: 13px;
+    background-color: yellowgreen;
+    border-radius: 50%;
+    position: absolute;
+    top: -5px;
+    left: -65px;
+    border: 2px solid #fff;
+}
+
+.new-message-indicator--visible {
+    display: block;
+}
+
+.messages__black-layer {
+    width: 100%;
+    height: 100%;
+    position: absolute;
+    right: -100%;
+    top: 0;
+    background-color: #000000c7;
+    transition: 500ms;
+    transition-timing-function: ease-in-out;
+    z-index: 9;
+}
+
+.messages__black-layer--opened {
+    right: 0;
+}

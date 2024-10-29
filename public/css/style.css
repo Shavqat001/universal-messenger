@@ -1,0 +1,13 @@
+/* GLOBAL */
+
+@import url('./global/fonts.css');
+@import url('./global/global.css');
+@import url('./global/normalize.css');
+@import url('./global/variable.css');
+
+/* BLOCKS */
+
+@import url('./blocks/auth.css');
+@import url('./blocks/messages.css');
+@import url('./blocks/page.css');
+@import url('./blocks/users.css');

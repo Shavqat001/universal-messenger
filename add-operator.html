@@ -1,0 +1,115 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Добавление Оператора</title>
+    <style>
+        body {
+            margin: 0;
+            background: linear-gradient(to top left, #111, #444);
+            height: 100vh;
+            display: grid;
+            place-items: center;
+        }
+
+        .add-operator {
+            max-width: 300px;
+            display: flex;
+            flex-direction: column;
+            gap: 25px;
+            font-family: sans-serif;
+            color: #222;
+            background: transparent;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 0 8px -2px #fff, inset 5px 5px 4px #222, inset -5px -5px 4px #222;
+            color: #fff;
+        }
+
+        .add-operator__title {
+            margin: 0;
+        }
+
+        .add-operator__form {
+            display: flex;
+            gap: 25px;
+            flex-direction: column;
+        }
+
+        .add-operator__form input {
+            border: none;
+            border-radius: 7px;
+            padding: 10px 15px;
+            font-size: 20px;
+            background-color: #ffffff28;
+            color: #fff;
+        }
+
+        .add-operator__form input:focus,
+        .add-operator__button:focus {
+            outline: 2px solid #777;
+        }
+
+        .add-operator__button {
+            border: none;
+            padding: 10px;
+            font-size: 20px;
+            background-color: dodgerblue;
+            color: #fff;
+            letter-spacing: 3px;
+            font-weight: bold;
+            border-radius: 10px;
+        }
+
+        #notify {
+            color: tomato;
+            margin: 0;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="add-operator">
+        <h2 class="add-operator__title">Создание оператора</h2>
+
+        <form class="add-operator__form" action="" onsubmit="register(event)">
+            <input type="text" name="operator" id="username" placeholder="Имя Оператора" required minlength="3">
+            <input type="password" name="password" id="password" placeholder="Пароль" required minlength="8">
+            <button class="add-operator__button" type="submit">Создать</button>
+        </form>
+
+        <p id="notify"></p>
+    </div>
+
+    <script>
+        window.addEventListener('load', () => {
+            document.querySelector(`input[type='text']`).focus()
+        })
+        function register(event) {
+            event.preventDefault();
+            const username = document.getElementById('username').value;
+            const password = document.getElementById('password').value;
+
+            fetch('http://localhost:8082/auth/register', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ username, password })
+            })
+                .then(response => response.text())
+                .then(data => {
+                    if (data === 'success') {
+                        document.getElementById('notify').innerText = 'Пользователь добавлен';
+                    } else {
+                        document.getElementById('notify').innerText = data;
+                    }
+                })
+                .catch(error => console.error('Error:', error));
+        }
+    </script>
+</body>
+
+</html>

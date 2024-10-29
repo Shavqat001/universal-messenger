@@ -1,0 +1,28 @@
+{
+  "name": "universal-messenger",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "start": "nodemon server.js"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "@adiwajshing/baileys": "^3.5.3",
+    "@mtproto/core": "6.3.0",
+    "body-parser": "^2.0.1",
+    "cors": "^2.8.5",
+    "dotenv": "^16.4.5",
+    "express": "^5.0.0",
+    "express-session": "^1.18.0",
+    "mysql2": "^3.11.2",
+    "nodemon": "^3.1.4",
+    "qrcode-terminal": "^0.12.0",
+    "telegraf": "^4.16.3",
+    "telegram-mtproto": "^1.0.5",
+    "whatsapp-web.js": "^1.25.0",
+    "ws": "^8.18.0"
+  }
+}
