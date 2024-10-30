@@ -1,4 +1,5 @@
-const socket = new WebSocket('ws://localhost:8081');
+const URL = 'localhost';
+const socket = new WebSocket(`ws://${URL}:8081`);
 let activeUser = null;
 let users = [];
 
@@ -16,14 +17,12 @@ logoutButton.addEventListener('click', async () => {
     try {
         console.log('Logout button clicked');
 
-        const response = await fetch('http://localhost:8082/logout', {
+        const response = await fetch(`http://${URL}:8082/logout`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' }
         });
 
         if (response.ok) {
-            console.log('Logout successful, clearing session and redirecting'); // Отладочное сообщение
-
             localStorage.clear();
 
             window.location.href = '/';
@@ -75,8 +74,7 @@ socket.onmessage = (event) => {
 
     if (activeUser === user.phoneNumber) {
         const messageClass = data.from === 'operator' ? 'messages__item_bot' :
-            data.platform === 'telegram' ? 'messages__item_telegram' :
-                'messages__item_whatsapp';
+            data.platform === 'telegram' ? 'messages__item_telegram' : 'messages__item_whatsapp';
 
         messagesList.innerHTML += `
             <li class="messages__item ${messageClass}">
@@ -151,7 +149,7 @@ function setActiveUser(chatId) {
 
     currentElement.querySelector('.new-message-indicator').classList.remove('new-message-indicator--visible');
 
-    fetch(`http://localhost:8082/api/messages/${chatId}`)
+    fetch(`http://${URL}:8082/api/messages/${chatId}`)
         .then(response => response.json())
         .then(data => {
             messagesList.innerHTML = '';
@@ -207,7 +205,7 @@ function cancelActiveUser() {
 }
 
 function loadClients() {
-    fetch('http://localhost:8082/api/clients')
+    fetch(`http://${URL}:8082/api/clients`)
         .then(response => response.json())
         .then(clients => {
             usersList.innerHTML = '';
@@ -226,7 +224,7 @@ function loadClients() {
                     users.push(user);
                 }
 
-                fetch(`http://localhost:8082/api/last_message/${client.phone_number}`)
+                fetch(`http://${URL}:8082/api/last_message/${client.phone_number}`)
                     .then(response => response.json())
                     .then(lastMessage => {
                         let userElement = document.getElementById(client.phone_number);
