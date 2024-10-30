@@ -5,18 +5,18 @@ const { Server } = require('ws');
 const { Telegraf } = require('telegraf');
 const { Client, LocalAuth } = require('whatsapp-web.js');
 const qrcode = require('qrcode-terminal');
-const mysql = require('mysql2');
 const path = require('path');
 const authRoutes = require('./public/js/auth');
+const connection = require('./public/js/db');
 
 const app = express();
-const port = 8082;
+const port = process.env.SERVER_PORT;
 
 app.use(express.static(path.join(__dirname, 'public')));
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use(cors({
-    origin: ['http://127.0.0.1:5500', 'http://localhost:8082'],
+    origin: ['http://localhost:8082'],
     methods: ['GET', 'POST', 'OPTIONS'],
     allowedHeaders: ['Content-Type'],
 }));
@@ -64,19 +64,7 @@ app.post('/logout', (req, res) => {
     }
 });
 
-const connection = mysql.createConnection({
-    host: 'localhost',
-    user: 'root',
-    password: '',
-    database: 'chat_bot'
-});
-
-connection.connect((err) => {
-    if (err) throw err;
-    console.log('Подключено к MySQL');
-});
-
-const wss = new Server({ port: 8081 });
+const wss = new Server({ port: process.env.WS_PORT });
 
 const bot = new Telegraf(process.env.TELEGRAM_TOKEN);
 
@@ -186,7 +174,6 @@ wss.on('connection', (ws) => {
 
             const userProfilePic = results.length > 0 ? results[0].sender_profile_pic : './img/avatar.jpg';
 
-            // Отправка сообщения обратно всем клиентам
             wss.clients.forEach(function each(client) {
                 if (client.readyState === client.OPEN) {
                     client.send(JSON.stringify({

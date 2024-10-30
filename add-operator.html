@@ -86,7 +86,8 @@
     <script>
         window.addEventListener('load', () => {
             document.querySelector(`input[type='text']`).focus()
-        })
+        });
+
         function register(event) {
             event.preventDefault();
             const username = document.getElementById('username').value;
@@ -103,6 +104,9 @@
                 .then(data => {
                     if (data === 'success') {
                         document.getElementById('notify').innerText = 'Пользователь добавлен';
+                        setTimeout(() => {
+                            window.location.href = '/';
+                        }, 2000);
                     } else {
                         document.getElementById('notify').innerText = data;
                     }

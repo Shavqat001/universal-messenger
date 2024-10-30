@@ -1,14 +1,7 @@
 const express = require('express');
 const crypto = require('crypto');
-const mysql = require('mysql2');
 const router = express.Router();
-
-const db = mysql.createConnection({
-    host: 'localhost',
-    user: 'root',
-    password: '',
-    database: 'chat_bot'
-});
+const db = require('./db');
 
 const hashPassword = (password) => {
     return crypto.createHash('sha256').update(password).digest('hex');
