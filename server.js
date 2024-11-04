@@ -23,21 +23,10 @@ app.use(cors({
 
 app.use('/auth', authRoutes);
 
-app.get('/', (req, res) => {
-    res.sendFile(path.resolve(__dirname, 'authorization.html'));
-});
-
-app.get('/add-operator', (req, res) => {
-    res.sendFile(path.resolve(__dirname, 'add-operator.html'));
-});
-
-app.get('/auth', (req, res) => {
-    res.sendFile(path.resolve(__dirname, 'authorization.html'));
-});
-
-app.get('/index', (req, res) => {
-    res.sendFile(path.resolve(__dirname, 'index.html'));
-});
+app.get('/', (req, res) => res.sendFile(path.resolve(__dirname, 'authorization.html')));
+app.get('/add-operator', (req, res) => res.sendFile(path.resolve(__dirname, 'add-operator.html')));
+app.get('/auth', (req, res) => res.sendFile(path.resolve(__dirname, 'authorization.html')));
+app.get('/index', (req, res) => res.sendFile(path.resolve(__dirname, 'index.html')));
 
 app.get('/api/last_message/:phoneNumber', (req, res) => {
     const phoneNumber = req.params.phoneNumber;
@@ -68,16 +57,15 @@ const wss = new Server({ port: process.env.WS_PORT });
 
 const bot = new Telegraf(process.env.TELEGRAM_TOKEN);
 
-bot.start((msg) => {
-    msg.reply(`Привет!\n\nЧем я могу вам помочь?`);
-});
+bot.start();
 
 bot.on('text', async (ctx) => {
     const chatId = ctx.chat.id;
     const name = ctx.chat.first_name || 'Telegram User';
     const phoneNumber = chatId.toString();
 
-    let profilePicUrl = './img/avatar.jpg';
+    let profilePicUrl = await getTelegramProfilePic(chatId) || './img/avatar.jpg';
+    
     try {
         const photos = await bot.telegram.getUserProfilePhotos(chatId);
         if (photos.total_count > 0) {
@@ -103,30 +91,27 @@ bot.on('text', async (ctx) => {
         INSERT INTO messages (phone_number, platform, sender_name, sender_profile_pic, message_text, message_type)
         VALUES (?, ?, ?, ?, ?, ?)
     `;
-    connection.query(query, [phoneNumber, 'telegram', name, profilePicUrl, ctx.message.text, 'client'], (err, result) => {
-        if (err) throw err;
-    });
+
+    connection.query(query, [phoneNumber, 'telegram', name, profilePicUrl, ctx.message.text, 'client'],
+        (err, result) => {
+            if (err) throw err;
+        });
 });
 
-bot.launch().then(() => console.log('Telegram bot launched successfully'))
+bot.launch()
+    .then(() => console.log('Telegram bot launched successfully'))
     .catch(err => console.error('Failed to launch Telegram bot:', err));
 
 const whatsappClient = new Client({
     authStrategy: new LocalAuth()
 });
 
-whatsappClient.on('qr', (qr) => {
-    qrcode.generate(qr, { small: true });
-});
-
-whatsappClient.on('ready', () => {
-    console.log('WhatsApp client is ready');
-});
+whatsappClient.on('qr', (qr) => qrcode.generate(qr, { small: true }));
+whatsappClient.on('ready', () => console.log('WhatsApp client is ready'));
 
 whatsappClient.on('message', async message => {
     const contact = await whatsappClient.getContactById(message.from);
     const displayName = contact.pushname || contact.name || 'WhatsApp User';
-
     const realPhoneNumber = contact.number || message.from.replace('@c.us', '');
 
     let profilePicUrl = './img/avatar.jpg';
@@ -156,6 +141,44 @@ whatsappClient.on('message', async message => {
         if (err) throw err;
     });
 });
+
+async function getTelegramProfilePic(chatId) {
+    return new Promise((resolve) => {
+        const defaultPic = './img/avatar.jpg';
+
+        // Проверяем, есть ли фото в базе
+        connection.query('SELECT sender_profile_pic FROM messages WHERE phone_number = ? LIMIT 1', [chatId], async (err, results) => {
+            if (err) {
+                console.error('Error checking profile picture:', err);
+                return resolve(defaultPic);
+            }
+
+            // Если фото уже есть в базе, возвращаем его
+            if (results.length > 0 && results[0].sender_profile_pic) {
+                return resolve(results[0].sender_profile_pic);
+            }
+
+            // Иначе запрашиваем у Telegram
+            try {
+                const photos = await bot.telegram.getUserProfilePhotos(chatId);
+                if (photos.total_count > 0) {
+                    const fileId = photos.photos[0][0].file_id;
+                    const fileLink = await bot.telegram.getFileLink(fileId);
+
+                    // Сохраняем ссылку на фото в базу
+                    const profilePicUrl = fileLink.href;
+                    connection.query('UPDATE messages SET sender_profile_pic = ? WHERE phone_number = ?', [profilePicUrl, chatId]);
+                    return resolve(profilePicUrl);
+                }
+            } catch (error) {
+                console.error('Error getting Telegram profile picture:', error);
+            }
+
+            // Если не удалось получить фото, возвращаем дефолтное
+            resolve(defaultPic);
+        });
+    });
+}
 
 whatsappClient.initialize()
     .then(() => '')

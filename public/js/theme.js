@@ -53,6 +53,7 @@ themeToggle.addEventListener('click', () => {
         pageSettings.classList.remove('page__settings--light');
         pageMenu.classList.remove('users__settings-menu--light');
         document.querySelectorAll('.users__name').forEach(el => el.classList.remove('users__name--light'))
+        document.querySelector('.page__settings_user-name').classList.remove('page__settings_user-name--light')
         isLight = false;
         JSON.stringify(localStorage.setItem('theme', isLight))
     } else {
@@ -64,6 +65,7 @@ themeToggle.addEventListener('click', () => {
         document.querySelectorAll('.messages__item').forEach(el => el.classList.add('messages__item--light'));
         themeToggle.classList.add('page__theme--light');
         pageSettings.classList.add('page__settings--light');
+        document.querySelector('.page__settings_user-name').classList.add('page__settings_user-name--light')
         pageMenu.classList.add('users__settings-menu--light');
         document.querySelectorAll('.users__name').forEach(el => el.classList.add('users__name--light'))
         isLight = true;
@@ -80,6 +82,7 @@ window.addEventListener('load', () => {
             form.classList.add('messages__form--light');
             messagesContent.classList.add('messages--light');
             document.querySelectorAll('.messages__item').forEach(el => el.classList.add('messages__item--light'));
+            document.querySelector('.page__settings_user-name').classList.add('page__settings_user-name--light')
             themeToggle.classList.add('page__theme--light');
             pageMenu.classList.add('users__settings-menu--light');
             pageSettings.classList.add('page__settings--light');
@@ -91,6 +94,7 @@ window.addEventListener('load', () => {
             form.classList.remove('messages__form--light');
             messagesContent.classList.remove('messages--light');
             document.querySelectorAll('.messages__item').forEach(el => el.classList.remove('messages__item--light'));
+            document.querySelector('.page__settings_user-name').classList.remove('page__settings_user-name--light')
             pageMenu.classList.remove('users__settings-menu--light');
             themeToggle.classList.remove('page__theme--light');
             pageSettings.classList.remove('page__settings--light');

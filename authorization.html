@@ -15,11 +15,12 @@
             <h2 class="auth__title">Login</h2>
 
             <form class="auth__form auth__form--login" id="login-form" onsubmit="login(event)" autocomplete="">
-                <input class="auth__input auth__input--username" type="text" id="username" name="username" placeholder="Username" minlength="5" required>
+                <input class="auth__input auth__input--username" type="text" id="username" name="username" placeholder="Username" minlength="3" required>
                 <input class="auth__input auth__input--password" type="password" id="password" name="password" placeholder="Password" required minlength="8">
                 <button class="auth__button auth__button--submit" type="submit">Login</button>
-                <p class="auth__error" id="login-error"></p>
             </form>
+
+            <p class="auth__error" id="login-error"></p>
         </div>
     </section>
 
@@ -28,7 +29,8 @@
             event.preventDefault();
             const username = document.getElementById('username').value;
             const password = document.getElementById('password').value;
-
+            localStorage.setItem('operator', username);
+            
             fetch('http://localhost:8082/auth/login', {
                 method: 'POST',
                 headers: {

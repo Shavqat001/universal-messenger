@@ -116,6 +116,8 @@ form.addEventListener('submit', (e) => {
     }
 });
 
+
+
 function setActiveUser(chatId) {
     const usersItem = document.querySelectorAll('.users__item');
     usersItem.forEach((el) => el.classList.remove('users__item--active'));
@@ -257,7 +259,10 @@ function loadClients() {
         .catch(err => console.error('Error loading clients:', err));
 }
 
-window.addEventListener('DOMContentLoaded', loadClients);
+window.addEventListener('DOMContentLoaded', () => {
+    loadClients();
+    document.querySelector('.page__settings_user-name').textContent = localStorage.getItem('operator') || 'operator';
+});
 
 messagesWrapperList.addEventListener('click', () => {
     messageInput.focus();

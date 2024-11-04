@@ -3,25 +3,9 @@
     height: 100vh;
     background-color: var(--dark-blue);
     z-index: 1;
-    overflow-y: auto;
+    overflow: hidden;
     box-sizing: border-box;
     position: relative;
-}
-
-.users::-webkit-scrollbar {
-    width: 5px;
-    position: absolute;
-    opacity: 0;
-}
-
-.users::-webkit-scrollbar-track {
-    background: transparent;
-}
-
-.users::-webkit-scrollbar-thumb {
-    background: #333333e5;
-    border: 1px solid #777;
-    border-radius: 20px;
 }
 
 .users__light--theme {
@@ -85,10 +69,24 @@
 
 .users__list {
     list-style: none;
+    height: 100%;
+    overflow-y: scroll;
 }
 
 .users__list::-webkit-scrollbar {
-    display: none;
+    width: 5px;
+    position: absolute;
+    opacity: 0;
+}
+
+.users__list::-webkit-scrollbar-track {
+    background: transparent;
+}
+
+.users__list::-webkit-scrollbar-thumb {
+    background: #333333e5;
+    border: 1px solid #777;
+    border-radius: 20px;
 }
 
 .users__item {
