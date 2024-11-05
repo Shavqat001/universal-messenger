@@ -54,6 +54,7 @@ themeToggle.addEventListener('click', () => {
         pageMenu.classList.remove('users__settings-menu--light');
         document.querySelectorAll('.users__name').forEach(el => el.classList.remove('users__name--light'))
         document.querySelector('.page__settings_user-name').classList.remove('page__settings_user-name--light')
+        document.querySelector('.users__logout').classList.remove('users__logout--light')
         isLight = false;
         JSON.stringify(localStorage.setItem('theme', isLight))
     } else {
@@ -66,6 +67,7 @@ themeToggle.addEventListener('click', () => {
         themeToggle.classList.add('page__theme--light');
         pageSettings.classList.add('page__settings--light');
         document.querySelector('.page__settings_user-name').classList.add('page__settings_user-name--light')
+        document.querySelector('.users__logout').classList.add('users__logout--light');
         pageMenu.classList.add('users__settings-menu--light');
         document.querySelectorAll('.users__name').forEach(el => el.classList.add('users__name--light'))
         isLight = true;
@@ -84,6 +86,7 @@ window.addEventListener('load', () => {
             document.querySelectorAll('.messages__item').forEach(el => el.classList.add('messages__item--light'));
             document.querySelector('.page__settings_user-name').classList.add('page__settings_user-name--light')
             themeToggle.classList.add('page__theme--light');
+            document.querySelector('.users__logout').classList.add('users__logout--light');
             pageMenu.classList.add('users__settings-menu--light');
             pageSettings.classList.add('page__settings--light');
             document.querySelectorAll('.users__name').forEach(el => el.classList.add('users__name--light'))
@@ -96,6 +99,7 @@ window.addEventListener('load', () => {
             document.querySelectorAll('.messages__item').forEach(el => el.classList.remove('messages__item--light'));
             document.querySelector('.page__settings_user-name').classList.remove('page__settings_user-name--light')
             pageMenu.classList.remove('users__settings-menu--light');
+            document.querySelector('.users__logout').classList.remove('users__logout--light')
             themeToggle.classList.remove('page__theme--light');
             pageSettings.classList.remove('page__settings--light');
             document.querySelectorAll('.users__name').forEach(el => el.classList.remove('users__name--light'))

@@ -5,12 +5,19 @@ const { Server } = require('ws');
 const { Telegraf } = require('telegraf');
 const { Client, LocalAuth } = require('whatsapp-web.js');
 const qrcode = require('qrcode-terminal');
+const session = require('express-session');
 const path = require('path');
 const authRoutes = require('./public/js/auth');
 const connection = require('./public/js/db');
 
 const app = express();
 const port = process.env.SERVER_PORT;
+
+app.use(session({
+    secret: process.env.SESSION_SECRET,
+    resave: false,
+    saveUninitialized: false
+}));
 
 app.use(express.static(path.join(__dirname, 'public')));
 app.use(express.json());
@@ -21,12 +28,21 @@ app.use(cors({
     allowedHeaders: ['Content-Type'],
 }));
 
+function isAuthenticated(req, res, next) {
+    if (req.session.username) {
+        next();
+    } else {
+        res.redirect('/');
+    }
+}
+
 app.use('/auth', authRoutes);
 
-app.get('/', (req, res) => res.sendFile(path.resolve(__dirname, 'authorization.html')));
-app.get('/add-operator', (req, res) => res.sendFile(path.resolve(__dirname, 'add-operator.html')));
+app.get('/', (req, res) => res.sendFile(path.resolve('authorization.html')));
+app.get('/add-operator', isAuthenticated, (req, res) => res.sendFile(path.resolve('add-operator.html')));
+app.get('/index', isAuthenticated, (req, res) => res.sendFile(path.resolve('index.html')));
+
 app.get('/auth', (req, res) => res.sendFile(path.resolve(__dirname, 'authorization.html')));
-app.get('/index', (req, res) => res.sendFile(path.resolve(__dirname, 'index.html')));
 
 app.get('/api/last_message/:phoneNumber', (req, res) => {
     const phoneNumber = req.params.phoneNumber;
@@ -43,14 +59,8 @@ app.get('/api/last_message/:phoneNumber', (req, res) => {
 });
 
 app.post('/logout', (req, res) => {
-    try {
-        console.log('Logout route called');
-
-        res.status(200).json({ message: 'Logged out successfully' });
-    } catch (error) {
-        console.error('Error during logout:', error);
-        res.status(500).json({ error: 'Internal Server Error during logout' });
-    }
+    req.session.destroy();
+    res.status(200).json({ message: 'Logged out successfully' });
 });
 
 const wss = new Server({ port: process.env.WS_PORT });

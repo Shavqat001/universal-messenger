@@ -185,6 +185,7 @@
     display: flex;
     align-items: center;
     padding: 6px 10px;
+    font-weight: bold;
 }
 
 .users__logout svg {
@@ -195,4 +196,15 @@
 .users__logout:hover {
     color: #fff;
     background-color: tomato;
+}
+
+.users__logout--light {
+    background-color: tomato;
+    color: #fff;
+}
+
+.users__logout--light:hover {
+    background-color: #333;
+    color: tomato;
+    box-shadow: 0 0 10px -5px tomato;
 }

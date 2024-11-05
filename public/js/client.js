@@ -116,8 +116,6 @@ form.addEventListener('submit', (e) => {
     }
 });
 
-
-
 function setActiveUser(chatId) {
     const usersItem = document.querySelectorAll('.users__item');
     usersItem.forEach((el) => el.classList.remove('users__item--active'));
