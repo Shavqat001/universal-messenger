@@ -40,7 +40,6 @@ window.addEventListener('keydown', (e) => {
     }
 });
 
-
 themeToggle.addEventListener('click', () => {
     if (isLight) {
         usersAside.classList.remove('users__light--theme');
@@ -55,6 +54,8 @@ themeToggle.addEventListener('click', () => {
         document.querySelectorAll('.users__name').forEach(el => el.classList.remove('users__name--light'))
         document.querySelector('.page__settings_user-name').classList.remove('page__settings_user-name--light')
         document.querySelector('.users__logout').classList.remove('users__logout--light')
+        document.querySelector('.page__settings-add-operator').classList.remove('page__settings-add-operator--light')
+        document.querySelector('.page__settings-operator-role').classList.remove('page__settings-operator-role--light')
         isLight = false;
         JSON.stringify(localStorage.setItem('theme', isLight))
     } else {
@@ -68,6 +69,8 @@ themeToggle.addEventListener('click', () => {
         pageSettings.classList.add('page__settings--light');
         document.querySelector('.page__settings_user-name').classList.add('page__settings_user-name--light')
         document.querySelector('.users__logout').classList.add('users__logout--light');
+        document.querySelector('.page__settings-add-operator').classList.add('page__settings-add-operator--light')
+        document.querySelector('.page__settings-operator-role').classList.add('page__settings-operator-role--light')
         pageMenu.classList.add('users__settings-menu--light');
         document.querySelectorAll('.users__name').forEach(el => el.classList.add('users__name--light'))
         isLight = true;
@@ -87,6 +90,8 @@ window.addEventListener('load', () => {
             document.querySelector('.page__settings_user-name').classList.add('page__settings_user-name--light')
             themeToggle.classList.add('page__theme--light');
             document.querySelector('.users__logout').classList.add('users__logout--light');
+            document.querySelector('.page__settings-add-operator').classList.add('page__settings-add-operator--light')
+        document.querySelector('.page__settings-operator-role').classList.add('page__settings-operator-role--light')
             pageMenu.classList.add('users__settings-menu--light');
             pageSettings.classList.add('page__settings--light');
             document.querySelectorAll('.users__name').forEach(el => el.classList.add('users__name--light'))
@@ -99,6 +104,8 @@ window.addEventListener('load', () => {
             document.querySelectorAll('.messages__item').forEach(el => el.classList.remove('messages__item--light'));
             document.querySelector('.page__settings_user-name').classList.remove('page__settings_user-name--light')
             pageMenu.classList.remove('users__settings-menu--light');
+            document.querySelector('.page__settings-add-operator').classList.remove('page__settings-add-operator--light')
+        document.querySelector('.page__settings-operator-role').classList.remove('page__settings-operator-role--light')
             document.querySelector('.users__logout').classList.remove('users__logout--light')
             themeToggle.classList.remove('page__theme--light');
             pageSettings.classList.remove('page__settings--light');

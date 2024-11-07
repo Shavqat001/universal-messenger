@@ -23,9 +23,24 @@
             color: #222;
             background: transparent;
             padding: 20px;
+            padding-top: 50px;
             border-radius: 8px;
             box-shadow: 0 0 8px -2px #fff, inset 5px 5px 4px #222, inset -5px -5px 4px #222;
             color: #fff;
+            position: relative;
+        }
+
+        .add-operator__back-btn {
+            text-decoration: none;
+            background-color: tomato;
+            color: #fff;
+            display: inline;
+            width: min-content;
+            padding: 5px 10px;
+            position: absolute;
+            top: 0;
+            left: 0;
+            border-radius: 5px 5px 0 5px;
         }
 
         .add-operator__title {
@@ -72,6 +87,7 @@
 
 <body>
     <div class="add-operator">
+        <a class="add-operator__back-btn" href="/index">Назад</a>
         <h2 class="add-operator__title">Создание оператора</h2>
 
         <form class="add-operator__form" action="" onsubmit="register(event)">
@@ -103,12 +119,10 @@
                 .then(response => response.text())
                 .then(data => {
                     if (data === 'success') {
-                        document.getElementById('notify').innerText = 'Пользователь добавлен';
-                        setTimeout(() => {
-                            window.location.href = '/';
-                        }, 2000);
+                        alert('Пользователь добавлен');
+                        window.location.href = '/index';
                     } else {
-                        document.getElementById('notify').innerText = data;
+                        alert(data)
                     }
                 })
                 .catch(error => console.error('Error:', error));

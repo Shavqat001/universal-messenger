@@ -57,10 +57,41 @@
     color: #fff;
     font-size: 30px;
     margin-top: 30px;
+    margin-bottom: 10px;
 }
 
 .page__settings_user-name--light {
     color: #333;
+}
+
+.page__settings-operator-role {
+    font-size: 16px;
+    color: #ffffffa8;
+    margin-bottom: 20px;
+}
+
+.page__settings-operator-role--light {
+    color: #333;
+}
+
+.page__settings-add-operator {
+    display: flex;
+    width: max-content;
+    letter-spacing: 1px;
+    text-decoration: none;
+    background-color: dodgerblue;
+    padding: 20px 10px;
+    border: none;
+    border-radius: 5px;
+    line-height: 0;
+    color: #fff;
+    font-size: 20px;
+}
+
+.page__settings-add-operator--light {
+    border: 2px solid dodgerblue;
+    color: #333;
+    background-color: transparent;
 }
 
 .page__theme {
@@ -73,6 +104,15 @@
     position: relative;
 }
 
+.page__theme span {
+    cursor: pointer;
+    position: absolute;
+    text-wrap: nowrap;
+    color: #fff;
+    left: 45px;
+    top: 2px;
+}
+
 .page__theme::after {
     content: '';
     width: 20px;
@@ -83,11 +123,14 @@
     border-radius: 50%;
     transition: 200ms;
     left: 0;
-
 }
 
 .page__theme--light {
     background-color: var(--dark-blue);
+}
+
+.page__theme--light span {
+    color: #333 !important;
 }
 
 .page__theme--light::after {

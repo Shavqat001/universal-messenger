@@ -206,5 +206,4 @@
 .users__logout--light:hover {
     background-color: #333;
     color: tomato;
-    box-shadow: 0 0 10px -5px tomato;
 }

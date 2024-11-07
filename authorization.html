@@ -42,6 +42,7 @@
             })
                 .then(response => response.text())
                 .then(data => {
+                    console.log('Login response:', data);
                     if (data === 'success') {
                         window.location.href = '/index';
                     } else {

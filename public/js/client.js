@@ -3,20 +3,18 @@ const socket = new WebSocket(`ws://${URL}:8081`);
 let activeUser = null;
 let users = [];
 
-let usersList = document.querySelector('.users__list');
-let messagesContent = document.querySelector('.messages');
-let form = document.querySelector('.messages__form');
-let messageInput = form.querySelector('.messages__input');
-let selectMessage = document.querySelector('.message__select_chat');
-let messagesList = document.querySelector('.messages__list');
-let messagesWrapperList = document.querySelector('.message__wrapper_list');
-let searchBar = document.querySelector('.users__search');
-let logoutButton = document.querySelector('.users__logout');
+const usersList = document.querySelector('.users__list');
+const messagesContent = document.querySelector('.messages');
+const form = document.querySelector('.messages__form');
+const messageInput = form.querySelector('.messages__input');
+const selectMessage = document.querySelector('.message__select_chat');
+const messagesList = document.querySelector('.messages__list');
+const messagesWrapperList = document.querySelector('.message__wrapper_list');
+const searchBar = document.querySelector('.users__search');
+const logoutButton = document.querySelector('.users__logout');
 
 logoutButton.addEventListener('click', async () => {
     try {
-        console.log('Logout button clicked');
-
         const response = await fetch(`http://${URL}:8082/logout`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' }
@@ -24,7 +22,6 @@ logoutButton.addEventListener('click', async () => {
 
         if (response.ok) {
             localStorage.clear();
-
             window.location.href = '/';
         } else {
             console.error('Logout failed with status:', response.status);
@@ -34,60 +31,91 @@ logoutButton.addEventListener('click', async () => {
     }
 });
 
-socket.onmessage = (event) => {
-    const data = JSON.parse(event.data);
+socket.onmessage = handleIncomingMessage;
 
-    let user = users.find(u => u.phoneNumber === data.phoneNumber);
+function addUserToUI(user) {
+    if (!user.phoneNumber || user.phoneNumber === "Unknown User") return;
 
-    if (!user) {
-        user = {
-            phoneNumber: data.phoneNumber,
-            name: data.name || 'Unknown User',
-            platform: data.platform,
-            profilePic: data.profilePic || '/img/avatar.jpg',
-            messages: []
-        };
-        users.push(user);
+    const userElement = document.createElement('li');
+    userElement.classList.add('users__item');
+    userElement.id = user.phoneNumber;
+    userElement.innerHTML = `
+        <div class="users__picture">
+            <img src="${user.profilePic || '/img/avatar.jpg'}" alt="${user.name}" width="50">
+        </div>
+        <div class="users__info">
+            <h3 class="users__name">${user.name || "Unknown User"}</h3>
+            <p class="users__text">No messages yet</p>
+            <span class="new-message-indicator"></span>
+        </div>
+        <img class="users__platform-icon" src="/assets/${user.platform}.ico" alt="${user.platform}" width="25">
+    `;
+    userElement.addEventListener('click', () => setActiveUser(user.phoneNumber));
+    usersList.appendChild(userElement);
+}
 
-        const userElement = document.createElement('li');
-        userElement.classList.add('users__item');
-        userElement.id = data.phoneNumber;
-        userElement.innerHTML = `
-            <div class="users__picture">
-                <img src="${user.profilePic}" alt="${data.name}" width="50">
-            </div>
-            <div class="users__info">
-                <h3 class="users__name">${data.name}</h3>
-                <p class="users__text">${data.message}</p>
-                <span class="new-message-indicator"></span>
-            </div>
-            <img class="users__platform-icon" src="/assets/${data.platform}.ico" alt="${data.platform}" width="25">
-        `;
-        userElement.addEventListener('click', () => setActiveUser(data.phoneNumber));
-        usersList.appendChild(userElement);
-    }
+function fetchMessages(chatId) {
+    loadMessagesForUser(chatId);
+}
 
-    user.messages.push({
-        text: data.message,
-        from: data.from || data.platform
-    });
+function loadClients() {
+    fetch(`http://${URL}:8082/api/clients`)
+        .then(response => response.json())
+        .then(clients => {
+            usersList.innerHTML = '';
 
-    if (activeUser === user.phoneNumber) {
-        const messageClass = data.from === 'operator' ? 'messages__item_bot' :
-            data.platform === 'telegram' ? 'messages__item_telegram' : 'messages__item_whatsapp';
+            clients.forEach(client => {
+                if (client.phone_number && client.sender_name) {
+                    let user = users.find(u => u.phoneNumber === client.phone_number);
+
+                    if (!user) {
+                        user = {
+                            phoneNumber: client.phone_number,
+                            name: client.sender_name || 'Unknown User',
+                            platform: client.platform,
+                            profilePic: client.sender_profile_pic || '/img/avatar.jpg',
+                            messages: []
+                        };
+                        users.push(user);
+                    }
+
+                    fetch(`http://${URL}:8082/api/last_message/${client.phone_number}`)
+                        .then(response => response.json())
+                        .then(lastMessage => {
+                            let userElement = document.getElementById(client.phone_number);
+                            if (!userElement) {
+                                addUserToUI(user);
+                            } else {
+                                userElement.querySelector('.users__picture img').src = client.sender_profile_pic || './img/avatar.jpg';
+                                userElement.querySelector('.users__text').textContent = lastMessage.message_text || '';
+                            }
+                        })
+                        .catch(err => console.error('Error loading last message:', err));
+                }
+            });
+        })
+        .catch(err => console.error('Error loading clients:', err));
+}
+
+function addMessageToUI(phoneNumber, message, from) {
+    const user = users.find(u => u.phoneNumber === phoneNumber);
+    if (user && activeUser === phoneNumber) {
+        const messageClass = from === 'operator' ? 'messages__item_bot' :
+            from === 'telegram' ? 'messages__item_telegram' : 'messages__item_whatsapp';
 
         messagesList.innerHTML += `
             <li class="messages__item ${messageClass}">
-                ${data.message}
+                ${message}
                 <span class="messages__item_tail"></span>
             </li>`;
         scrollToBottom();
     } else {
-        const userElement = document.getElementById(user.phoneNumber);
-        userElement.querySelector('.new-message-indicator').classList.add('new-message-indicator--visible');
-        userElement.querySelector('.users__text').textContent = data.message;
+        const userElement = document.getElementById(phoneNumber);
+        if (userElement) {
+            userElement.querySelector('.new-message-indicator').classList.add('new-message-indicator--visible');
+        }
     }
-};
+}
 
 function scrollToBottom() {
     messagesWrapperList.scrollTop = messagesList.scrollHeight;
@@ -97,22 +125,17 @@ form.addEventListener('submit', (e) => {
     e.preventDefault();
     if (activeUser && messageInput.value.trim() !== '') {
         const messageText = messageInput.value.trim();
-
         const user = users.find(u => u.phoneNumber === activeUser);
-
-        if (!user) {
-            return;
+        if (user) {
+            user.messages.push({ text: messageText, from: 'operator' });
+            socket.send(JSON.stringify({
+                platform: user.platform,
+                phoneNumber: activeUser,
+                inputText: messageText
+            }));
+            saveMessageToDB(activeUser, messageText, 'operator', user.platform);
+            messageInput.value = '';
         }
-
-        user.messages.push({ text: messageText, from: 'operator' });
-
-        socket.send(JSON.stringify({
-            platform: user.platform,
-            phoneNumber: activeUser,
-            inputText: messageText
-        }));
-
-        messageInput.value = '';
     }
 });
 
@@ -174,27 +197,23 @@ function setActiveUser(chatId) {
         .catch(err => console.error('Error fetching messages:', err));
 }
 
-searchBar.addEventListener('input', () => {
-    const usersItem = document.querySelectorAll('.users__item');
-    usersItem.forEach(user => {
-        if (user.querySelector('.users__name')
-            .textContent.toLowerCase() === searchBar.value.toLowerCase()) {
-            usersItem.forEach(el => el.style.display = 'none');
-            user.style.display = 'flex';
-        }
-        if (searchBar.value === '') {
-            usersItem.forEach(el => el.style.display = 'flex');
-        }
-    });
-});
+function saveMessageToDB(phoneNumber, messageText, messageType, platform) {
+    fetch(`http://${URL}:8082/api/save_message`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ phoneNumber, messageText, messageType, platform })
+    }).catch(error => console.error('Error saving message to database:', error));
+}
 
-window.addEventListener('keydown', (e) => {
-    if (e.key === 'Escape') {
-        cancelActiveUser();
-    }
-});
+function loadMessagesForUser(phoneNumber) {
+    fetch(`http://${URL}:8082/api/messages/${phoneNumber}`)
+        .then(response => response.json())
+        .then(data => data.forEach(msg => addMessageToUI(phoneNumber, msg.message_text, msg.message_type)))
+        .catch(err => console.error('Error loading messages:', err));
+}
 
 function cancelActiveUser() {
+    activeUser = null;
     const usersItem = document.querySelectorAll('.users__item');
     usersItem.forEach(el => el.classList.remove('users__item--active'));
     messagesContent.style.justifyContent = 'center';
@@ -204,62 +223,54 @@ function cancelActiveUser() {
     messagesWrapperList.classList.add('visually-hidden');
 }
 
-function loadClients() {
-    fetch(`http://${URL}:8082/api/clients`)
-        .then(response => response.json())
-        .then(clients => {
-            usersList.innerHTML = '';
+function handleIncomingMessage(event) {
+    const data = JSON.parse(event.data);
 
-            clients.forEach(client => {
-                let user = users.find(u => u.phoneNumber === client.phone_number);
+    if (data.action === 'clientTaken') {
+        alert(data.message);
+        cancelActiveUser();
+        return;
+    }
 
-                if (!user) {
-                    user = {
-                        phoneNumber: client.phone_number,
-                        name: client.sender_name || 'Unknown User',
-                        platform: client.platform,
-                        profilePic: client.sender_profile_pic || '/img/avatar.jpg',
-                        messages: []
-                    };
-                    users.push(user);
-                }
+    let user = users.find(u => u.phoneNumber === data.phoneNumber);
 
-                fetch(`http://${URL}:8082/api/last_message/${client.phone_number}`)
-                    .then(response => response.json())
-                    .then(lastMessage => {
-                        let userElement = document.getElementById(client.phone_number);
-                        if (!userElement) {
-                            userElement = document.createElement('li');
-                            userElement.classList.add('users__item');
-                            userElement.id = client.phone_number;
-                            userElement.innerHTML = `
-                                <div class="users__picture">
-                                    <img src="${client.sender_profile_pic || '/img/avatar.jpg'}" alt="${client.sender_name || 'Unknown User'}" width="50">
-                                </div>
-                                <div class="users__info">
-                                    <h3 class="users__name">${client.sender_name || 'Unknown User'}</h3>
-                                    <p class="users__text">${lastMessage.message_text || ''}</p>
-                                    <span class="new-message-indicator"></span>
-                                </div>
-                                <img class="users__platform-icon" src="/assets/${client.platform}.ico" alt="${client.platform}" width="25">
-                            `;
+    if (!user) {
+        user = {
+            phoneNumber: data.phoneNumber,
+            name: data.name || 'Unknown User',
+            platform: data.platform,
+            profilePic: data.profilePic || '/img/avatar.jpg',
+            messages: []
+        };
+        users.push(user);
+        addUserToUI(user);
+    }
 
-                            userElement.addEventListener('click', () => setActiveUser(client.phone_number));
-                            usersList.appendChild(userElement);
-                        } else {
-                            userElement.querySelector('.users__picture img').src = client.sender_profile_pic || './img/avatar.jpg';
-                            userElement.querySelector('.users__text').textContent = lastMessage.message_text || '';
-                        }
-                    })
-                    .catch(err => console.error('Error loading last message:', err));
-            });
-        })
-        .catch(err => console.error('Error loading clients:', err));
+    user.messages.push({ text: data.message, from: data.from || data.platform });
+    addMessageToUI(user.phoneNumber, data.message, data.from || data.platform);
 }
 
 window.addEventListener('DOMContentLoaded', () => {
     loadClients();
-    document.querySelector('.page__settings_user-name').textContent = localStorage.getItem('operator') || 'operator';
+    const operatorName = localStorage.getItem('operator') || 'operator';
+    document.querySelector('.page__settings_user-name').textContent = operatorName;
+
+    const roleElement = document.querySelector('.page__settings-operator-role');
+    const addOperatorLink = document.querySelector('.page__settings-add-operator');
+
+    if (operatorName === 'Shavqat') {
+        roleElement.textContent = 'Администратор';
+        addOperatorLink.style.display = 'flex';
+    } else {
+        roleElement.textContent = 'Оператор';
+        addOperatorLink.style.display = 'none';
+    }
+});
+
+window.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape') {
+        cancelActiveUser();
+    }
 });
 
 messagesWrapperList.addEventListener('click', () => {
