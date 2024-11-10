@@ -45,7 +45,7 @@ function addUserToUI(user) {
         </div>
         <div class="users__info">
             <h3 class="users__name">${user.name || "Unknown User"}</h3>
-            <p class="users__text">No messages yet</p>
+            <p class="users__text">${user.lastMessage || 'No messages yet'}</p>
             <span class="new-message-indicator"></span>
         </div>
         <img class="users__platform-icon" src="/assets/${user.platform}.ico" alt="${user.platform}" width="25">
@@ -99,6 +99,7 @@ function loadClients() {
 
 function addMessageToUI(phoneNumber, message, from) {
     const user = users.find(u => u.phoneNumber === phoneNumber);
+
     if (user && activeUser === phoneNumber) {
         const messageClass = from === 'operator' ? 'messages__item_bot' :
             from === 'telegram' ? 'messages__item_telegram' : 'messages__item_whatsapp';
@@ -113,6 +114,7 @@ function addMessageToUI(phoneNumber, message, from) {
         const userElement = document.getElementById(phoneNumber);
         if (userElement) {
             userElement.querySelector('.new-message-indicator').classList.add('new-message-indicator--visible');
+            userElement.querySelector('.users__text').textContent = message;
         }
     }
 }
@@ -247,10 +249,17 @@ function handleIncomingMessage(event) {
                 name: data.name || 'Unknown User',
                 platform: data.platform,
                 profilePic: data.profilePic || '/img/avatar.jpg',
+                lastMessage: data.message,
                 messages: []
             };
             users.push(user);
             addUserToUI(user);
+        } else {
+            user.lastMessage = data.message;
+            const userElement = document.getElementById(user.phoneNumber);
+            if (userElement) {
+                userElement.querySelector('.users__text').textContent = data.message;
+            }
         }
 
         if (user.messages.find(msg => msg.text === data.message && msg.from === (data.from || data.platform))) {
@@ -258,7 +267,7 @@ function handleIncomingMessage(event) {
         }
 
         user.messages.push({ text: data.message, from: data.from || data.platform });
-        
+
         if (activeUser === data.phoneNumber) {
             addMessageToUI(data.phoneNumber, data.message, data.from || data.platform);
         }

@@ -222,8 +222,8 @@ wss.on('connection', (ws) => {
         const data = JSON.parse(msg);
     
         if (data.action === 'setActiveUser' && data.phoneNumber && data.operatorName) {
-            const { phoneNumber, operatorName } = data;
-    
+            const { phoneNumber, operatorName, platform } = data;
+
             if (clientsMap[phoneNumber] && clientsMap[phoneNumber] !== operatorName) {
                 ws.send(JSON.stringify({
                     action: 'clientTaken',
@@ -231,12 +231,27 @@ wss.on('connection', (ws) => {
                 }));
             } else {
                 clientsMap[phoneNumber] = operatorName;
-    
+
                 const greetingMessage = `Привет! оператор: ${operatorName} готов ответить на ваши вопросы.`;
-                bot.telegram.sendMessage(phoneNumber, greetingMessage)
-                    .then(() => console.log('Greeting message sent to Telegram'))
-                    .catch(err => console.error('Failed to send greeting message to Telegram:', err));
-    
+
+                if (platform === 'whatsapp') {
+                    whatsappClient.sendMessage(phoneNumber + '@c.us', greetingMessage)
+                        .then(() => {
+                            console.log('Greeting message sent to WhatsApp');
+                            console.log(`Saving greeting message to DB for WhatsApp user: ${phoneNumber}`);
+                            saveGreetingMessageToDB(phoneNumber, 'whatsapp', operatorName, greetingMessage);
+                        })
+                        .catch(err => console.error('Failed to send greeting message to WhatsApp:', err));
+                } else if (platform === 'telegram') {
+                    bot.telegram.sendMessage(phoneNumber, greetingMessage)
+                        .then(() => {
+                            console.log('Greeting message sent to Telegram');
+                            console.log(`Saving greeting message to DB for Telegram user: ${phoneNumber}`);
+                            saveGreetingMessageToDB(phoneNumber, 'telegram', operatorName, greetingMessage);
+                        })
+                        .catch(err => console.error('Failed to send greeting message to Telegram:', err));
+                }                
+
                 ws.send(JSON.stringify({ action: 'assignClient', success: true }));
             }
         }
@@ -303,6 +318,22 @@ app.get('/api/clients', (req, res) => {
         }
     });
 });
+
+function saveGreetingMessageToDB(phoneNumber, platform, operatorName, messageText) {
+    console.log(`Inserting greeting message into DB for ${platform} user: ${phoneNumber}`);
+    const query = `
+        INSERT INTO messages (phone_number, platform, sender_name, message_text, message_type)
+        VALUES (?, ?, ?, ?, ?)
+    `;
+    connection.query(query, [phoneNumber, platform, operatorName, messageText, 'operator'], (err, result) => {
+        if (err) {
+            console.error('Error saving greeting message to database:', err);
+        } else {
+            console.log('Greeting message saved to database');
+        }
+    });
+}
+
 
 app.get('/api/messages/:phoneNumber', (req, res) => {
     const phoneNumber = req.params.phoneNumber;
