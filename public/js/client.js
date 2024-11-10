@@ -105,7 +105,7 @@ function addMessageToUI(phoneNumber, message, from) {
 
         messagesList.innerHTML += `
             <li class="messages__item ${messageClass}">
-                ${message}
+                <span class="messages__item__text">${message}</span>
                 <span class="messages__item_tail"></span>
             </li>`;
         scrollToBottom();
@@ -148,78 +148,63 @@ function setActiveUser(chatId) {
         operatorName: operatorName
     }));
 
-    socket.onmessage = (event) => {
-        const data = JSON.parse(event.data);
+    const usersItem = document.querySelectorAll('.users__item');
+    usersItem.forEach((el) => el.classList.remove('users__item--active'));
 
-        if (data.action === 'clientTaken') {
-            alert(data.message);
-            cancelActiveUser();
-            return;
-        }
+    const currentElement = document.getElementById(chatId);
+    currentElement.classList.add('users__item--active');
 
-        if (data.action === 'assignClient') {
-            loadChatMessages(chatId);
-        }
-    };
+    messagesContent.style.justifyContent = 'space-between';
+    selectMessage.classList.add('visually-hidden');
+    form.classList.remove('visually-hidden');
+    messageInput.focus();
+    activeUser = chatId;
+    messagesList.innerHTML = '';
+    messagesWrapperList.classList.remove('visually-hidden');
 
-    function loadChatMessages(chatId) {
-        const usersItem = document.querySelectorAll('.users__item');
-        usersItem.forEach((el) => el.classList.remove('users__item--active'));
+    const user = users.find(u => u.phoneNumber === chatId);
+    if (user && user.messages) {
+        user.messages.forEach(msg => {
+            const messageClass = msg.from === 'telegram' ? 'messages__item_telegram' :
+                msg.from === 'whatsapp' ? 'messages__item_whatsapp' :
+                    'messages__item_bot';
 
-        const currentElement = document.getElementById(chatId);
-        currentElement.classList.add('users__item--active');
+            messagesList.innerHTML += `
+            <li class="messages__item ${messageClass}">
+                ${msg.text}
+                <span class="messages__item_tail"></span>
+            </li>`;
+        });
+        scrollToBottom();
+    }
 
-        messagesContent.style.justifyContent = 'space-between';
-        selectMessage.classList.add('visually-hidden');
-        form.classList.remove('visually-hidden');
-        messageInput.focus();
-        activeUser = chatId;
-        messagesList.innerHTML = '';
-        messagesWrapperList.classList.remove('visually-hidden');
+    currentElement.querySelector('.new-message-indicator').classList.remove('new-message-indicator--visible');
 
-        const user = users.find(u => u.phoneNumber === chatId);
-        if (user && user.messages) {
-            user.messages.forEach(msg => {
-                const messageClass = msg.from === 'telegram' ? 'messages__item_telegram' :
-                    msg.from === 'whatsapp' ? 'messages__item_whatsapp' :
-                        'messages__item_bot';
+    fetch(`http://${URL}:8082/api/messages/${chatId}`)
+        .then(response => response.json())
+        .then(data => {
+            messagesList.innerHTML = '';
+
+            data.forEach(msg => {
+                let messageClass = '';
+                if (msg.message_type === 'client') {
+                    messageClass = msg.platform === 'telegram' ? 'messages__item_telegram' :
+                        msg.platform === 'whatsapp' ? 'messages__item_whatsapp' : 'messages__item_client';
+                } else if (msg.message_type === 'operator') {
+                    messageClass = 'messages__item_bot';
+                }
 
                 messagesList.innerHTML += `
-                <li class="messages__item ${messageClass}">
-                    ${msg.text}
-                    <span class="messages__item_tail"></span>
-                </li>`;
+            <li class="messages__item ${messageClass}">
+                ${msg.message_text}
+                <span class="messages__item_tail"></span>
+            </li>`;
             });
             scrollToBottom();
-        }
-
-        currentElement.querySelector('.new-message-indicator').classList.remove('new-message-indicator--visible');
-
-        fetch(`http://${URL}:8082/api/messages/${chatId}`)
-            .then(response => response.json())
-            .then(data => {
-                messagesList.innerHTML = '';
-
-                data.forEach(msg => {
-                    let messageClass = '';
-                    if (msg.message_type === 'client') {
-                        messageClass = msg.platform === 'telegram' ? 'messages__item_telegram' :
-                            msg.platform === 'whatsapp' ? 'messages__item_whatsapp' : 'messages__item_client';
-                    } else if (msg.message_type === 'operator') {
-                        messageClass = 'messages__item_bot';
-                    }
-
-                    messagesList.innerHTML += `
-                <li class="messages__item ${messageClass}">
-                    ${msg.message_text}
-                    <span class="messages__item_tail"></span>
-                </li>`;
-                });
-                scrollToBottom();
-            })
-            .catch(err => console.error('Error fetching messages:', err));
-    }
+        })
+        .catch(err => console.error('Error fetching messages:', err));
 }
+
 
 function loadMessagesForUser(phoneNumber) {
     fetch(`http://${URL}:8082/api/messages/${phoneNumber}`)
@@ -248,22 +233,36 @@ function handleIncomingMessage(event) {
         return;
     }
 
-    let user = users.find(u => u.phoneNumber === data.phoneNumber);
-
-    if (!user) {
-        user = {
-            phoneNumber: data.phoneNumber,
-            name: data.name || 'Unknown User',
-            platform: data.platform,
-            profilePic: data.profilePic || '/img/avatar.jpg',
-            messages: []
-        };
-        users.push(user);
-        addUserToUI(user);
+    if (data.action === 'assignClient' && data.phoneNumber === activeUser) {
+        loadChatMessages(data.phoneNumber);
+        return;
     }
 
-    user.messages.push({ text: data.message, from: data.from || data.platform });
-    addMessageToUI(user.phoneNumber, data.message, data.from || data.platform);
+    if (data.message && data.phoneNumber) {
+        let user = users.find(u => u.phoneNumber === data.phoneNumber);
+
+        if (!user) {
+            user = {
+                phoneNumber: data.phoneNumber,
+                name: data.name || 'Unknown User',
+                platform: data.platform,
+                profilePic: data.profilePic || '/img/avatar.jpg',
+                messages: []
+            };
+            users.push(user);
+            addUserToUI(user);
+        }
+
+        if (user.messages.find(msg => msg.text === data.message && msg.from === (data.from || data.platform))) {
+            return;
+        }
+
+        user.messages.push({ text: data.message, from: data.from || data.platform });
+        
+        if (activeUser === data.phoneNumber) {
+            addMessageToUI(data.phoneNumber, data.message, data.from || data.platform);
+        }
+    }
 }
 
 window.addEventListener('DOMContentLoaded', () => {

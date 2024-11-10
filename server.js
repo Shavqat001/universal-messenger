@@ -220,10 +220,10 @@ const clientsMap = {};
 wss.on('connection', (ws) => {
     ws.on('message', async (msg) => {
         const data = JSON.parse(msg);
-
+    
         if (data.action === 'setActiveUser' && data.phoneNumber && data.operatorName) {
             const { phoneNumber, operatorName } = data;
-
+    
             if (clientsMap[phoneNumber] && clientsMap[phoneNumber] !== operatorName) {
                 ws.send(JSON.stringify({
                     action: 'clientTaken',
@@ -231,13 +231,53 @@ wss.on('connection', (ws) => {
                 }));
             } else {
                 clientsMap[phoneNumber] = operatorName;
-
+    
                 const greetingMessage = `Привет! оператор: ${operatorName} готов ответить на ваши вопросы.`;
                 bot.telegram.sendMessage(phoneNumber, greetingMessage)
                     .then(() => console.log('Greeting message sent to Telegram'))
                     .catch(err => console.error('Failed to send greeting message to Telegram:', err));
-
+    
                 ws.send(JSON.stringify({ action: 'assignClient', success: true }));
+            }
+        }
+    
+        if (data.inputText && data.phoneNumber) {
+            const phoneNumber = data.phoneNumber;
+            const messageText = data.inputText;
+            const operatorName = data.operatorName;
+    
+            const query = `
+                INSERT INTO messages (phone_number, platform, sender_name, message_text, message_type)
+                VALUES (?, ?, ?, ?, ?)
+            `;
+            connection.query(query, [phoneNumber, 'web', operatorName, messageText, 'operator'], (err, result) => {
+                if (err) {
+                    console.error('Error saving operator message to database:', err);
+                } else {
+                    console.log('Operator message saved to database');
+    
+                    // Отправка сообщения всем подключённым WebSocket-клиентам, чтобы обновить интерфейсы
+                    wss.clients.forEach(client => {
+                        if (client.readyState === client.OPEN) {
+                            client.send(JSON.stringify({
+                                platform: 'web',
+                                phoneNumber: phoneNumber,
+                                message: messageText,
+                                from: 'operator'
+                            }));
+                        }
+                    });
+                }
+            });
+    
+            if (data.platform === 'telegram') {
+                bot.telegram.sendMessage(phoneNumber, messageText)
+                    .then(() => console.log('Message sent to Telegram'))
+                    .catch(err => console.error('Failed to send message to Telegram:', err));
+            } else if (data.platform === 'whatsapp') {
+                whatsappClient.sendMessage(phoneNumber + '@c.us', messageText)
+                    .then(() => console.log('Message sent to WhatsApp'))
+                    .catch(err => console.error('Failed to send message to WhatsApp:', err));
             }
         }
     });
