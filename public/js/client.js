@@ -133,76 +133,92 @@ form.addEventListener('submit', (e) => {
                 phoneNumber: activeUser,
                 inputText: messageText
             }));
-            saveMessageToDB(activeUser, messageText, 'operator', user.platform);
+            addMessageToUI(activeUser, messageText, 'operator');
             messageInput.value = '';
         }
     }
 });
 
 function setActiveUser(chatId) {
-    const usersItem = document.querySelectorAll('.users__item');
-    usersItem.forEach((el) => el.classList.remove('users__item--active'));
+    const operatorName = localStorage.getItem('operator');
 
-    const currentElement = document.getElementById(chatId);
-    currentElement.classList.add('users__item--active');
+    socket.send(JSON.stringify({
+        action: 'setActiveUser',
+        phoneNumber: chatId,
+        operatorName: operatorName
+    }));
 
-    messagesContent.style.justifyContent = 'space-between';
-    selectMessage.classList.add('visually-hidden');
-    form.classList.remove('visually-hidden');
-    messageInput.focus();
-    activeUser = chatId;
-    messagesList.innerHTML = '';
-    messagesWrapperList.classList.remove('visually-hidden');
+    socket.onmessage = (event) => {
+        const data = JSON.parse(event.data);
 
-    const user = users.find(u => u.phoneNumber === chatId);
-    if (user && user.messages) {
-        user.messages.forEach(msg => {
-            const messageClass = msg.from === 'telegram' ? 'messages__item_telegram' :
-                msg.from === 'whatsapp' ? 'messages__item_whatsapp' :
-                    'messages__item_bot';
+        if (data.action === 'clientTaken') {
+            alert(data.message);
+            cancelActiveUser();
+            return;
+        }
 
-            messagesList.innerHTML += `
-            <li class="messages__item ${messageClass}">
-                ${msg.text}
-                <span class="messages__item_tail"></span>
-            </li>`;
-        });
-        scrollToBottom();
-    }
+        if (data.action === 'assignClient') {
+            loadChatMessages(chatId);
+        }
+    };
 
-    currentElement.querySelector('.new-message-indicator').classList.remove('new-message-indicator--visible');
+    function loadChatMessages(chatId) {
+        const usersItem = document.querySelectorAll('.users__item');
+        usersItem.forEach((el) => el.classList.remove('users__item--active'));
 
-    fetch(`http://${URL}:8082/api/messages/${chatId}`)
-        .then(response => response.json())
-        .then(data => {
-            messagesList.innerHTML = '';
+        const currentElement = document.getElementById(chatId);
+        currentElement.classList.add('users__item--active');
 
-            data.forEach(msg => {
-                let messageClass = '';
-                if (msg.message_type === 'client') {
-                    messageClass = msg.platform === 'telegram' ? 'messages__item_telegram' :
-                        msg.platform === 'whatsapp' ? 'messages__item_whatsapp' : 'messages__item_client';
-                } else if (msg.message_type === 'operator') {
-                    messageClass = 'messages__item_bot';
-                }
+        messagesContent.style.justifyContent = 'space-between';
+        selectMessage.classList.add('visually-hidden');
+        form.classList.remove('visually-hidden');
+        messageInput.focus();
+        activeUser = chatId;
+        messagesList.innerHTML = '';
+        messagesWrapperList.classList.remove('visually-hidden');
+
+        const user = users.find(u => u.phoneNumber === chatId);
+        if (user && user.messages) {
+            user.messages.forEach(msg => {
+                const messageClass = msg.from === 'telegram' ? 'messages__item_telegram' :
+                    msg.from === 'whatsapp' ? 'messages__item_whatsapp' :
+                        'messages__item_bot';
 
                 messagesList.innerHTML += `
-            <li class="messages__item ${messageClass}">
-                ${msg.message_text}
-                <span class="messages__item_tail"></span>
-            </li>`;
+                <li class="messages__item ${messageClass}">
+                    ${msg.text}
+                    <span class="messages__item_tail"></span>
+                </li>`;
             });
             scrollToBottom();
-        })
-        .catch(err => console.error('Error fetching messages:', err));
-}
+        }
 
-function saveMessageToDB(phoneNumber, messageText, messageType, platform) {
-    fetch(`http://${URL}:8082/api/save_message`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ phoneNumber, messageText, messageType, platform })
-    }).catch(error => console.error('Error saving message to database:', error));
+        currentElement.querySelector('.new-message-indicator').classList.remove('new-message-indicator--visible');
+
+        fetch(`http://${URL}:8082/api/messages/${chatId}`)
+            .then(response => response.json())
+            .then(data => {
+                messagesList.innerHTML = '';
+
+                data.forEach(msg => {
+                    let messageClass = '';
+                    if (msg.message_type === 'client') {
+                        messageClass = msg.platform === 'telegram' ? 'messages__item_telegram' :
+                            msg.platform === 'whatsapp' ? 'messages__item_whatsapp' : 'messages__item_client';
+                    } else if (msg.message_type === 'operator') {
+                        messageClass = 'messages__item_bot';
+                    }
+
+                    messagesList.innerHTML += `
+                <li class="messages__item ${messageClass}">
+                    ${msg.message_text}
+                    <span class="messages__item_tail"></span>
+                </li>`;
+                });
+                scrollToBottom();
+            })
+            .catch(err => console.error('Error fetching messages:', err));
+    }
 }
 
 function loadMessagesForUser(phoneNumber) {
