@@ -289,7 +289,17 @@ window.addEventListener('DOMContentLoaded', () => {
         roleElement.textContent = 'Оператор';
         addOperatorLink.style.display = 'none';
     }
+
+    document.querySelector('.page__settings-form').addEventListener('submit', (e) => {
+        e.preventDefault();
+        if (operatorName === 'Shavqat') {
+            window.location.href = '/add-operator';
+        } else {
+            window.location.href = '/index';
+        }
+    });
 });
+
 
 window.addEventListener('keydown', (e) => {
     if (e.key === 'Escape') {

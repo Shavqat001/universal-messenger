@@ -87,6 +87,7 @@
     color: #fff;
     font-size: 20px;
     transition: 300ms;
+    cursor: pointer;
 }
 
 .page__settings-add-operator--light {

@@ -219,3 +219,17 @@
 .messages__black-layer--opened {
     left: 0;
 }
+
+.messages__release-client {
+    position: absolute;
+    font-weight: bold;
+    background-color: tomato;
+    color: #fff;
+    letter-spacing: 2px;
+    cursor: pointer;
+    padding: 10px 20px;
+    border-radius: 4px;
+    top: 0;
+    right: 0;
+    border: none;
+}
