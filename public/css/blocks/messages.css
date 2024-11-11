@@ -3,6 +3,7 @@
     height: 100vh;
     background: url('../../img/background.jpg') 50% / 100%,
         linear-gradient(to top left, rgb(3, 47, 90), rgba(44, 10, 4, 0.74));
+    background-attachment: fixed;
     display: flex;
     flex-direction: column;
     justify-content: center;
@@ -12,6 +13,7 @@
     background: url('../../img/white-bg.jpg') 50% / 100%,
         linear-gradient(to bottom right, rgb(88, 92, 97),
             rgba(214, 214, 214, 0.74));
+    background-attachment: fixed;
 }
 
 .message__select_chat {
@@ -41,6 +43,8 @@
     color: #fff;
     font-size: 18px;
     list-style: none;
+    padding-left: 15px;
+    padding-right: 15px;
     display: flex;
     flex-direction: column;
 }
@@ -207,7 +211,7 @@
     left: -100%;
     top: 0;
     background-color: #000000c7;
-    transition: 500ms;
+    transition: 300ms;
     transition-timing-function: ease-in-out;
     z-index: 9;
 }
