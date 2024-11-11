@@ -14,10 +14,10 @@
     left: -100vw;
     height: 100vh;
     z-index: 10;
-    transition: 600ms;
+    transition: 300ms;
     padding: 25px;
     transition-timing-function: ease-in-out;
-    box-shadow: 0px 0px 30px -10px #fff;
+    box-shadow: 0px 0px 15px -5px #fff;
 }
 
 .page__settings--light {
@@ -67,7 +67,7 @@
 .page__settings-operator-role {
     font-size: 16px;
     color: #ffffffa8;
-    margin-bottom: 20px;
+    margin-bottom: 15px;
 }
 
 .page__settings-operator-role--light {
@@ -86,12 +86,18 @@
     line-height: 0;
     color: #fff;
     font-size: 20px;
+    transition: 300ms;
 }
 
 .page__settings-add-operator--light {
     border: 2px solid dodgerblue;
     color: #333;
     background-color: transparent;
+}
+
+.page__settings-add-operator--light:hover {
+    background-color: dodgerblue;
+    color: #fff;
 }
 
 .page__theme {
