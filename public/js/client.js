@@ -65,33 +65,31 @@ function loadClients() {
             usersList.innerHTML = '';
 
             clients.forEach(client => {
-                if (client.phone_number && client.sender_name) {
-                    let user = users.find(u => u.phoneNumber === client.phone_number);
+                let user = users.find(u => u.phoneNumber === client.phone_number);
 
-                    if (!user) {
-                        user = {
-                            phoneNumber: client.phone_number,
-                            name: client.sender_name || 'Unknown User',
-                            platform: client.platform,
-                            profilePic: client.sender_profile_pic || '/img/avatar.jpg',
-                            messages: []
-                        };
-                        users.push(user);
-                    }
-
-                    fetch(`http://${URL}:8082/api/last_message/${client.phone_number}`)
-                        .then(response => response.json())
-                        .then(lastMessage => {
-                            let userElement = document.getElementById(client.phone_number);
-                            if (!userElement) {
-                                addUserToUI(user);
-                            } else {
-                                userElement.querySelector('.users__picture img').src = client.sender_profile_pic || './img/avatar.jpg';
-                                userElement.querySelector('.users__text').textContent = lastMessage.message_text || '';
-                            }
-                        })
-                        .catch(err => console.error('Error loading last message:', err));
+                if (!user) {
+                    user = {
+                        phoneNumber: client.phone_number,
+                        name: client.sender_name || 'Unknown User',
+                        platform: client.platform,
+                        profilePic: client.sender_profile_pic || '/img/avatar.jpg', // Проверяем картинку из базы
+                        messages: []
+                    };
+                    users.push(user);
                 }
+
+                fetch(`http://${URL}:8082/api/last_message/${client.phone_number}`)
+                    .then(response => response.json())
+                    .then(lastMessage => {
+                        let userElement = document.getElementById(client.phone_number);
+                        if (!userElement) {
+                            addUserToUI(user);
+                        } else {
+                            userElement.querySelector('.users__picture img').src = user.profilePic; // Используем profilePic из user
+                            userElement.querySelector('.users__text').textContent = lastMessage.message_text || '';
+                        }
+                    })
+                    .catch(err => console.error('Error loading last message:', err));
             });
         })
         .catch(err => console.error('Error loading clients:', err));
@@ -143,13 +141,15 @@ form.addEventListener('submit', (e) => {
 
 function setActiveUser(chatId) {
     const operatorName = localStorage.getItem('operator');
+    const user = users.find(u => u.phoneNumber === chatId);
+    const platform = user ? user.platform : 'unknown';
 
     socket.send(JSON.stringify({
         action: 'setActiveUser',
         phoneNumber: chatId,
-        operatorName: operatorName
+        operatorName: operatorName,
+        platform: platform
     }));
-
     const usersItem = document.querySelectorAll('.users__item');
     usersItem.forEach((el) => el.classList.remove('users__item--active'));
 
@@ -164,7 +164,6 @@ function setActiveUser(chatId) {
     messagesList.innerHTML = '';
     messagesWrapperList.classList.remove('visually-hidden');
 
-    const user = users.find(u => u.phoneNumber === chatId);
     if (user && user.messages) {
         user.messages.forEach(msg => {
             const messageClass = msg.from === 'telegram' ? 'messages__item_telegram' :
@@ -180,7 +179,9 @@ function setActiveUser(chatId) {
         scrollToBottom();
     }
 
-    currentElement.querySelector('.new-message-indicator').classList.remove('new-message-indicator--visible');
+    if (currentElement) {
+        currentElement.querySelector('.new-message-indicator').classList.remove('new-message-indicator--visible');
+    }
 
     fetch(`http://${URL}:8082/api/messages/${chatId}`)
         .then(response => response.json())
@@ -197,10 +198,10 @@ function setActiveUser(chatId) {
                 }
 
                 messagesList.innerHTML += `
-            <li class="messages__item ${messageClass}">
-                ${msg.message_text}
-                <span class="messages__item_tail"></span>
-            </li>`;
+                <li class="messages__item ${messageClass}">
+                    ${msg.message_text}
+                    <span class="messages__item_tail"></span>
+                </li>`;
             });
             scrollToBottom();
         })
@@ -229,17 +230,20 @@ function cancelActiveUser() {
 function handleIncomingMessage(event) {
     const data = JSON.parse(event.data);
 
+    // Проверка на клиент, занят другим оператором
     if (data.action === 'clientTaken') {
         alert(data.message);
         cancelActiveUser();
         return;
     }
 
+    // Проверка на успешное назначение клиента
     if (data.action === 'assignClient' && data.phoneNumber === activeUser) {
         loadChatMessages(data.phoneNumber);
         return;
     }
 
+    // Если получено приветственное сообщение или любое другое сообщение
     if (data.message && data.phoneNumber) {
         let user = users.find(u => u.phoneNumber === data.phoneNumber);
 
@@ -262,17 +266,22 @@ function handleIncomingMessage(event) {
             }
         }
 
-        if (user.messages.find(msg => msg.text === data.message && msg.from === (data.from || data.platform))) {
-            return;
-        }
+        // Проверка на дублирование сообщений
+        if (!user.messages.some(msg => msg.text === data.message && msg.from === (data.from || data.platform))) {
+            user.messages.push({ text: data.message, from: data.from || data.platform });
 
-        user.messages.push({ text: data.message, from: data.from || data.platform });
-
-        if (activeUser === data.phoneNumber) {
-            addMessageToUI(data.phoneNumber, data.message, data.from || data.platform);
+            if (activeUser === data.phoneNumber) {
+                addMessageToUI(data.phoneNumber, data.message, data.from || data.platform);
+            } else {
+                const userElement = document.getElementById(data.phoneNumber);
+                if (userElement) {
+                    userElement.querySelector('.new-message-indicator').classList.add('new-message-indicator--visible');
+                }
+            }
         }
     }
 }
+
 
 window.addEventListener('DOMContentLoaded', () => {
     loadClients();
