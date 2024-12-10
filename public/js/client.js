@@ -1,4 +1,4 @@
-const URL = 'localhost';
+﻿const URL = '172.16.5.5';
 const socket = new WebSocket(`ws://${URL}:8081`);
 let activeUser = null;
 let users = [];
@@ -230,20 +230,17 @@ function cancelActiveUser() {
 function handleIncomingMessage(event) {
     const data = JSON.parse(event.data);
 
-    // Проверка на клиент, занят другим оператором
     if (data.action === 'clientTaken') {
         alert(data.message);
         cancelActiveUser();
         return;
     }
 
-    // Проверка на успешное назначение клиента
     if (data.action === 'assignClient' && data.phoneNumber === activeUser) {
         loadChatMessages(data.phoneNumber);
         return;
     }
 
-    // Если получено приветственное сообщение или любое другое сообщение
     if (data.message && data.phoneNumber) {
         let user = users.find(u => u.phoneNumber === data.phoneNumber);
 
@@ -266,7 +263,6 @@ function handleIncomingMessage(event) {
             }
         }
 
-        // Проверка на дублирование сообщений
         if (!user.messages.some(msg => msg.text === data.message && msg.from === (data.from || data.platform))) {
             user.messages.push({ text: data.message, from: data.from || data.platform });
 
@@ -281,7 +277,6 @@ function handleIncomingMessage(event) {
         }
     }
 }
-
 
 window.addEventListener('DOMContentLoaded', () => {
     loadClients();
@@ -319,3 +314,38 @@ window.addEventListener('keydown', (e) => {
 messagesWrapperList.addEventListener('click', () => {
     messageInput.focus();
 });
+
+let contextMenu = document.createElement('div');
+contextMenu.className = 'contextmenu'
+contextMenu.innerHTML = `
+    <ul class="contextmenu-list">
+	<li class="contextmenu-item">Не обслужать</li>
+        <li class="contextmenu-item">Удалить</li>
+    </ul>
+`;
+
+contextMenu.style = `
+        display: none;
+        width: 200px;
+        height: 200px;
+        background: #333;
+        position: absolute;
+        left:0px; 
+        top:0px;
+        padding: 10px;
+        z-index: 1000;
+        border-radius: 5px;
+        box-shadow: 0 0 10px -5px #fff;
+        transition: 250ms;
+        color: #fff;
+    `;
+document.body.append(contextMenu);
+
+document.addEventListener('contextmenu', (e) => {
+    e.preventDefault();
+    contextMenu.style.display = 'block';
+    contextMenu.style.left = `${e.pageX}px`;
+    contextMenu.style.top = `${e.pageY}px`;
+});
+
+window.addEventListener('click',()=>{contextMenu.style.display = 'none';})

@@ -87,7 +87,6 @@
     color: #fff;
     font-size: 20px;
     transition: 300ms;
-    cursor: pointer;
 }
 
 .page__settings-add-operator--light {
@@ -143,4 +142,22 @@
 .page__theme--light::after {
     border: 1px solid #333;
     left: 20px;
+}
+
+.contextmenu-list {
+    list-style: none;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.contextmenu-item {
+    cursor: pointer;
+    transition: 170ms;
+    padding: 7px 10px;
+    border-radius: 5px;
+}
+
+.contextmenu-item:hover {
+    background: dodgerblue;
 }
