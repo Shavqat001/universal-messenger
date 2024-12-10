@@ -172,6 +172,16 @@
     text-overflow: ellipsis;
 }
 
+.users__edit-btn {
+    border: none;
+    background-color: transparent;
+    overflow: hidden;
+    outline: none;
+    position: absolute;
+    bottom: 10px;
+    right: 15px;
+}
+
 .users__logout {
     background-color: transparent;
     border: none;

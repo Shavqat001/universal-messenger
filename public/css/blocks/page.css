@@ -144,6 +144,21 @@
     left: 20px;
 }
 
+.contextmenu {
+    width: 200px;
+    height: 0;
+    overflow: hidden;
+    position: absolute;
+    left: 0px;
+    top: 0px;
+    padding: 0px;
+    z-index: 1000;
+    border-radius: 5px;
+    box-shadow: 0 0 6px -3px #fff;
+    color: #fff;
+    background-color: var(--dark-blue);
+}
+
 .contextmenu-list {
     list-style: none;
     display: flex;

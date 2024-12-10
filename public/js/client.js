@@ -12,6 +12,16 @@ const messagesList = document.querySelector('.messages__list');
 const messagesWrapperList = document.querySelector('.message__wrapper_list');
 const searchBar = document.querySelector('.users__search');
 const logoutButton = document.querySelector('.users__logout');
+const contextMenu = document.createElement('div');
+
+contextMenu.className = 'contextmenu';
+contextMenu.innerHTML = `
+    <ul class="contextmenu-list">
+	    <li class="contextmenu-item">${activeUser ? 'Не обслуживать' : 'Обслуживать'}</li>
+        <li class="contextmenu-item">Удалить</li>
+    </ul>`;
+
+document.body.append(contextMenu);
 
 logoutButton.addEventListener('click', async () => {
     try {
@@ -49,6 +59,12 @@ function addUserToUI(user) {
             <span class="new-message-indicator"></span>
         </div>
         <img class="users__platform-icon" src="/assets/${user.platform}.ico" alt="${user.platform}" width="25">
+        <button class="users__edit-btn">
+            <svg width="15" height="5">
+                <use xlink:href="#three-points"></use>
+            </svg>
+            <span class="visually-hidden">edit</span>
+        </button>
     `;
     userElement.addEventListener('click', () => setActiveUser(user.phoneNumber));
     usersList.appendChild(userElement);
@@ -315,37 +331,21 @@ messagesWrapperList.addEventListener('click', () => {
     messageInput.focus();
 });
 
-let contextMenu = document.createElement('div');
-contextMenu.className = 'contextmenu'
-contextMenu.innerHTML = `
-    <ul class="contextmenu-list">
-	<li class="contextmenu-item">Не обслужать</li>
-        <li class="contextmenu-item">Удалить</li>
-    </ul>
-`;
-
-contextMenu.style = `
-        display: none;
-        width: 200px;
-        height: 200px;
-        background: #333;
-        position: absolute;
-        left:0px; 
-        top:0px;
-        padding: 10px;
-        z-index: 1000;
-        border-radius: 5px;
-        box-shadow: 0 0 10px -5px #fff;
-        transition: 250ms;
-        color: #fff;
-    `;
-document.body.append(contextMenu);
-
-document.addEventListener('contextmenu', (e) => {
+document.body.addEventListener('contextmenu', (e) => {
     e.preventDefault();
-    contextMenu.style.display = 'block';
-    contextMenu.style.left = `${e.pageX}px`;
-    contextMenu.style.top = `${e.pageY}px`;
-});
+})
 
-window.addEventListener('click',()=>{contextMenu.style.display = 'none';})
+document.querySelectorAll('.users__item').forEach((user) => {
+    user.addEventListener('contextmenu', (e) => {
+        e.preventDefault()
+        contextMenu.style.height = "auto";
+        contextMenu.style.padding = "10px";
+        contextMenu.style.left = `${e.pageX}px`;
+        contextMenu.style.top = `${e.pageY}px`;
+    });
+})
+
+window.addEventListener('click', () => {
+    contextMenu.style.height = "0";
+    contextMenu.style.padding = "0 10px";
+})
