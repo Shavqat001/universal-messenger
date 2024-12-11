@@ -40,76 +40,65 @@ window.addEventListener('keydown', (e) => {
     }
 });
 
+const elementsWithClasses = [
+    { selector: '.users__item', className: 'users__item--light', isMultiple: true },
+    { selector: '.messages__item', className: 'messages__item--light', isMultiple: true },
+    { selector: '.page__settings_user-name', className: 'page__settings_user-name--light' },
+    { selector: '.users__logout', className: 'users__logout--light' },
+    { selector: '.page__settings-add-operator', className: 'page__settings-add-operator--light' },
+    { selector: '.page__settings-operator-role', className: 'page__settings-operator-role--light' },
+    { selector: '.users__name', className: 'users__name--light', isMultiple: true },
+    { selector: usersAside, className: 'users__light--theme' },
+    { selector: searchBar, className: 'users__search--light' },
+    { selector: form, className: 'messages__form--light' },
+    { selector: messagesContent, className: 'messages--light' },
+    { selector: themeToggle, className: 'page__theme--light' },
+    { selector: pageMenu, className: 'users__settings-menu--light' },
+    { selector: pageSettings, className: 'page__settings--light' }
+];
+
+function toggleClasses(isLight) {
+    elementsWithClasses.forEach(item => {
+        if (item.isMultiple) {
+            document.querySelectorAll(item.selector).forEach(el => el.classList.toggle(item.className, isLight));
+        } else {
+            const element = typeof item.selector === 'string' ? document.querySelector(item.selector) : item.selector;
+            if (element) {
+                element.classList.toggle(item.className, isLight);
+            }
+        }
+    });
+}
+
 themeToggle.addEventListener('click', () => {
-    if (isLight) {
-        usersAside.classList.remove('users__light--theme');
-        document.querySelectorAll('.users__item').forEach(el => el.classList.remove('users__item--light'));
-        searchBar.classList.remove('users__search--light');
-        form.classList.remove('messages__form--light');
-        messagesContent.classList.remove('messages--light');
-        document.querySelectorAll('.messages__item').forEach(el => el.classList.remove('messages__item--light'));
-        themeToggle.classList.remove('page__theme--light');
-        pageSettings.classList.remove('page__settings--light');
-        pageMenu.classList.remove('users__settings-menu--light');
-        document.querySelectorAll('.users__name').forEach(el => el.classList.remove('users__name--light'))
-        document.querySelector('.page__settings_user-name').classList.remove('page__settings_user-name--light')
-        document.querySelector('.users__logout').classList.remove('users__logout--light')
-        document.querySelector('.page__settings-add-operator').classList.remove('page__settings-add-operator--light')
-        document.querySelector('.page__settings-operator-role').classList.remove('page__settings-operator-role--light')
-        isLight = false;
-        JSON.stringify(localStorage.setItem('theme', isLight))
-    } else {
-        usersAside.classList.add('users__light--theme');
-        document.querySelectorAll('.users__item').forEach(el => el.classList.add('users__item--light'));
-        searchBar.classList.add('users__search--light');
-        form.classList.add('messages__form--light');
-        messagesContent.classList.add('messages--light');
-        document.querySelectorAll('.messages__item').forEach(el => el.classList.add('messages__item--light'));
-        themeToggle.classList.add('page__theme--light');
-        pageSettings.classList.add('page__settings--light');
-        document.querySelector('.page__settings_user-name').classList.add('page__settings_user-name--light')
-        document.querySelector('.users__logout').classList.add('users__logout--light');
-        document.querySelector('.page__settings-add-operator').classList.add('page__settings-add-operator--light')
-        document.querySelector('.page__settings-operator-role').classList.add('page__settings-operator-role--light')
-        pageMenu.classList.add('users__settings-menu--light');
-        document.querySelectorAll('.users__name').forEach(el => el.classList.add('users__name--light'))
-        isLight = true;
-        JSON.stringify(localStorage.setItem('theme', isLight))
-    }
+    isLight = !isLight;
+    toggleClasses(isLight);
+    localStorage.setItem('theme', JSON.stringify(isLight));
 });
 
-window.addEventListener('load', () => {
-    setTimeout(() => {
-        if (isLight) {
-            usersAside.classList.add('users__light--theme');
-            document.querySelectorAll('.users__item').forEach(el => el.classList.add('users__item--light'));
-            searchBar.classList.add('users__search--light');
-            form.classList.add('messages__form--light');
-            messagesContent.classList.add('messages--light');
-            document.querySelectorAll('.messages__item').forEach(el => el.classList.add('messages__item--light'));
-            document.querySelector('.page__settings_user-name').classList.add('page__settings_user-name--light')
-            themeToggle.classList.add('page__theme--light');
-            document.querySelector('.users__logout').classList.add('users__logout--light');
-            document.querySelector('.page__settings-add-operator').classList.add('page__settings-add-operator--light')
-        document.querySelector('.page__settings-operator-role').classList.add('page__settings-operator-role--light')
-            pageMenu.classList.add('users__settings-menu--light');
-            pageSettings.classList.add('page__settings--light');
-            document.querySelectorAll('.users__name').forEach(el => el.classList.add('users__name--light'))
-        } else {
-            usersAside.classList.remove('users__light--theme');
-            document.querySelectorAll('.users__item').forEach(el => el.classList.remove('users__item--light'));
-            searchBar.classList.remove('users__search--light');
-            form.classList.remove('messages__form--light');
-            messagesContent.classList.remove('messages--light');
-            document.querySelectorAll('.messages__item').forEach(el => el.classList.remove('messages__item--light'));
-            document.querySelector('.page__settings_user-name').classList.remove('page__settings_user-name--light')
-            pageMenu.classList.remove('users__settings-menu--light');
-            document.querySelector('.page__settings-add-operator').classList.remove('page__settings-add-operator--light')
-        document.querySelector('.page__settings-operator-role').classList.remove('page__settings-operator-role--light')
-            document.querySelector('.users__logout').classList.remove('users__logout--light')
-            themeToggle.classList.remove('page__theme--light');
-            pageSettings.classList.remove('page__settings--light');
-            document.querySelectorAll('.users__name').forEach(el => el.classList.remove('users__name--light'))
+function handleDynamicElements() {
+    const dynamicSelectors = [
+        { selector: '.messages__item', className: 'messages__item--light', isMultiple: true },
+        { selector: '.users__item', className: 'users__item--light', isMultiple: true }
+    ];
+
+    dynamicSelectors.forEach(item => {
+        if (item.isMultiple) {
+            document.querySelectorAll(item.selector).forEach(el => {
+                if (isLight) {
+                    el.classList.add(item.className);
+                } else {
+                    el.classList.remove(item.className);
+                }
+            });
         }
-    }, 100);
+    });
+}
+
+setInterval(() => {
+    handleDynamicElements();
+}, 1000);
+
+window.addEventListener('load', () => {
+    toggleClasses(isLight);
 });
