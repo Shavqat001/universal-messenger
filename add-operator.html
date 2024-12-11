@@ -5,98 +5,23 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Добавление Оператора</title>
-    <style>
-        body {
-            margin: 0;
-            background: linear-gradient(to top left, #111, #444);
-            height: 100vh;
-            display: grid;
-            place-items: center;
-        }
-
-        .add-operator {
-            max-width: 300px;
-            display: flex;
-            flex-direction: column;
-            gap: 25px;
-            font-family: sans-serif;
-            color: #222;
-            background: transparent;
-            padding: 20px;
-            padding-top: 50px;
-            border-radius: 8px;
-            box-shadow: 0 0 8px -2px #fff, inset 5px 5px 4px #222, inset -5px -5px 4px #222;
-            color: #fff;
-            position: relative;
-        }
-
-        .add-operator__back-btn {
-            text-decoration: none;
-            background-color: tomato;
-            color: #fff;
-            display: inline;
-            width: min-content;
-            padding: 5px 10px;
-            position: absolute;
-            top: 0;
-            left: 0;
-            border-radius: 5px 5px 0 5px;
-        }
-
-        .add-operator__title {
-            margin: 0;
-        }
-
-        .add-operator__form {
-            display: flex;
-            gap: 25px;
-            flex-direction: column;
-        }
-
-        .add-operator__form input {
-            border: none;
-            border-radius: 7px;
-            padding: 10px 15px;
-            font-size: 20px;
-            background-color: #ffffff28;
-            color: #fff;
-        }
-
-        .add-operator__form input:focus,
-        .add-operator__button:focus {
-            outline: 2px solid #777;
-        }
-
-        .add-operator__button {
-            border: none;
-            padding: 10px;
-            font-size: 20px;
-            background-color: dodgerblue;
-            color: #fff;
-            letter-spacing: 3px;
-            font-weight: bold;
-            border-radius: 10px;
-        }
-
-        #notify {
-            color: tomato;
-            margin: 0;
-        }
-    </style>
+    <link rel="stylesheet" href="/css/blocks/add-operator.css">
+    <link rel="shortcut icon" href="/assets/favicon.ico">
 </head>
 
 <body>
     <div class="add-operator">
-        <a class="add-operator__back-btn" href="/index">Назад</a>
+        <a class="add-operator__back-btn" href="/index"></a>
         <h2 class="add-operator__title">Создание оператора</h2>
 
         <form class="add-operator__form" action="" onsubmit="register(event)">
             <input type="text" name="operator" id="username" placeholder="Имя Оператора" required minlength="3">
             <select name="role" id="role" required>
                 <option value="admin">Администратор</option>
-                <option value="operator">Оператор</option>
+                <option value="operator" selected>Оператор</option>
                 <option value="analyst">Аналитик</option>
             </select>
+            <button class="role-drop-down"></button>
             <input type="password" name="password" id="password" placeholder="Пароль" required minlength="8">
             <button class="add-operator__button" type="submit">Создать</button>
         </form>
