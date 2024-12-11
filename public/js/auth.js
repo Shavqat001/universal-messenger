@@ -8,14 +8,14 @@ const hashPassword = (password) => {
 };
 
 router.post('/register', (req, res) => {
-    const { username, password } = req.body;
+    const { username, role, password } = req.body;
     db.query('SELECT * FROM operators WHERE username = ?', [username], (err, results) => {
         if (results.length > 0) {
             return res.send('Пользователь с таким именем уже существует.');
         } else {
             const hashedPassword = hashPassword(password);
-            db.query('INSERT INTO operators (username, password) VALUES (?, ?)',
-                [username, hashedPassword], (err, result) => {
+            db.query('INSERT INTO operators (username, role, password) VALUES (?, ?, ?)',
+                [username, role, hashedPassword], (err, result) => {
                     if (err) throw err;
                     res.send('success');
                 });

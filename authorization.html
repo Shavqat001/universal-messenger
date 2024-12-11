@@ -33,7 +33,7 @@
             const password = document.getElementById('password').value;
             localStorage.setItem('operator', username);
 
-            fetch('http://172.16.5.5:8082/auth/login', {
+            fetch('http://localhost:8082/auth/login', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json'

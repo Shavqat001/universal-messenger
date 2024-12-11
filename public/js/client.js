@@ -1,4 +1,4 @@
-﻿const URL = '172.16.5.5';
+﻿const URL = 'localhost';
 const socket = new WebSocket(`ws://${URL}:8081`);
 let activeUser = null;
 let users = [];
@@ -66,7 +66,20 @@ function addUserToUI(user) {
             <span class="visually-hidden">edit</span>
         </button>
     `;
-    userElement.addEventListener('click', () => setActiveUser(user.phoneNumber));
+    userElement.addEventListener('click', (e) => {
+        setActiveUser(user.phoneNumber);
+        if (e.target.classList.contains('users__edit-btn')) {
+            contextMenu.style.height = "auto";
+            contextMenu.style.padding = "10px";
+            contextMenu.style.left = `${e.pageX}px`;
+            contextMenu.style.top = `${e.pageY}px`;
+            console.log(true);
+        } else {
+            contextMenu.style.height = "auto";
+            contextMenu.style.padding = "0 10px";
+            console.log(true);
+        }
+    });
     usersList.appendChild(userElement);
 }
 
@@ -88,7 +101,7 @@ function loadClients() {
                         phoneNumber: client.phone_number,
                         name: client.sender_name || 'Unknown User',
                         platform: client.platform,
-                        profilePic: client.sender_profile_pic || '/img/avatar.jpg', // Проверяем картинку из базы
+                        profilePic: client.sender_profile_pic || '/img/avatar.jpg',
                         messages: []
                     };
                     users.push(user);
@@ -159,13 +172,17 @@ function setActiveUser(chatId) {
     const operatorName = localStorage.getItem('operator');
     const user = users.find(u => u.phoneNumber === chatId);
     const platform = user ? user.platform : 'unknown';
+    let role = document.querySelector('.page__settings-operator-role');
 
-    socket.send(JSON.stringify({
-        action: 'setActiveUser',
-        phoneNumber: chatId,
-        operatorName: operatorName,
-        platform: platform
-    }));
+    if (role.textContent !== 'Аналитик') {
+        socket.send(JSON.stringify({
+            action: 'setActiveUser',
+            phoneNumber: chatId,
+            operatorName: operatorName,
+            platform: platform
+        }));
+    }
+
     const usersItem = document.querySelectorAll('.users__item');
     usersItem.forEach((el) => el.classList.remove('users__item--active'));
 
@@ -247,8 +264,8 @@ function handleIncomingMessage(event) {
     const data = JSON.parse(event.data);
 
     if (data.action === 'clientTaken') {
-        alert(data.message);
         cancelActiveUser();
+        alert(data.message);
         return;
     }
 
@@ -294,7 +311,7 @@ function handleIncomingMessage(event) {
     }
 }
 
-window.addEventListener('DOMContentLoaded', () => {
+window.addEventListener('DOMContentLoaded', async () => {
     loadClients();
     const operatorName = localStorage.getItem('operator') || 'operator';
     document.querySelector('.page__settings_user-name').textContent = operatorName;
@@ -302,24 +319,58 @@ window.addEventListener('DOMContentLoaded', () => {
     const roleElement = document.querySelector('.page__settings-operator-role');
     const addOperatorLink = document.querySelector('.page__settings-add-operator');
 
-    if (operatorName === 'Shavqat') {
-        roleElement.textContent = 'Администратор';
-        addOperatorLink.style.display = 'flex';
-    } else {
-        roleElement.textContent = 'Оператор';
-        addOperatorLink.style.display = 'none';
+    const roleTranslations = {
+        ru: {
+            admin: 'Администратор',
+            operator: 'Оператор',
+            analyst: 'Аналитик',
+            unknown: 'Неизвестная роль',
+        },
+        en: {
+            admin: 'Administrator',
+            operator: 'Operator',
+            analyst: 'Analyst',
+            unknown: 'Unknown Role',
+        }
+    };
+
+    const currentLanguage = localStorage.getItem('language') || 'ru';
+
+    try {
+        const response = await fetch(`http://${URL}:8082/getRole`);
+        if (!response.ok) {
+            throw new Error('Не удалось получить роль пользователя');
+        }
+
+        const data = await response.json();
+
+        if (data.role) {
+            const translatedRole = roleTranslations[currentLanguage][data.role] || roleTranslations[currentLanguage].unknown;
+
+            roleElement.textContent = translatedRole;
+            addOperatorLink.style.display = data.role === 'admin' ? 'flex' : 'none';
+        } else {
+            roleElement.textContent = roleTranslations[currentLanguage].unknown;
+            addOperatorLink.style.display = 'none';
+        }
+    } catch (error) {
+        console.error('Ошибка при загрузке роли пользователя:', error);
     }
 
     document.querySelector('.page__settings-form').addEventListener('submit', (e) => {
         e.preventDefault();
-        if (operatorName === 'Shavqat') {
+        const adminRole = roleTranslations[currentLanguage].admin;
+        if (roleElement.textContent === adminRole) {
             window.location.href = '/add-operator';
         } else {
             window.location.href = '/index';
         }
     });
-});
 
+    if (roleElement.textContent === roleTranslations.ru.analyst) {
+        form.remove();
+    }
+});
 
 window.addEventListener('keydown', (e) => {
     if (e.key === 'Escape') {
@@ -333,16 +384,6 @@ messagesWrapperList.addEventListener('click', () => {
 
 document.body.addEventListener('contextmenu', (e) => {
     e.preventDefault();
-})
-
-document.querySelectorAll('.users__item').forEach((user) => {
-    user.addEventListener('contextmenu', (e) => {
-        e.preventDefault()
-        contextMenu.style.height = "auto";
-        contextMenu.style.padding = "10px";
-        contextMenu.style.left = `${e.pageX}px`;
-        contextMenu.style.top = `${e.pageY}px`;
-    });
 })
 
 window.addEventListener('click', () => {

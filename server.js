@@ -221,29 +221,28 @@ const greetingSentMap = {};
 wss.on('connection', (ws) => {
     ws.on('message', async (msg) => {
         const data = JSON.parse(msg);
-    
+
         if (data.action === 'setActiveUser' && data.phoneNumber && data.operatorName) {
             const { phoneNumber, operatorName, platform } = data;
 
             if (clientsMap[phoneNumber] && clientsMap[phoneNumber] !== operatorName) {
                 ws.send(JSON.stringify({
                     action: 'clientTaken',
-                    message: 'Этот клиент занят другим оператором'
+                    message: 'Этот клиент занят другим оператором!'
                 }));
             } else {
                 clientsMap[phoneNumber] = operatorName;
 
                 if (!greetingSentMap[phoneNumber]) {
                     const greetingMessage = `Привет! оператор: ${operatorName} готов ответить на ваши вопросы.`;
-                    
+
                     if (platform === 'whatsapp') {
                         whatsappClient.sendMessage(phoneNumber + '@c.us', greetingMessage)
                             .then(() => {
                                 console.log('Greeting message sent to WhatsApp');
                                 greetingSentMap[phoneNumber] = true;
                                 saveGreetingMessageToDB(phoneNumber, 'whatsapp', operatorName, greetingMessage);
-                    
-                                // Отправляем обновление клиенту
+
                                 ws.send(JSON.stringify({
                                     phoneNumber: phoneNumber,
                                     message: greetingMessage,
@@ -257,8 +256,7 @@ wss.on('connection', (ws) => {
                                 console.log('Greeting message sent to Telegram');
                                 greetingSentMap[phoneNumber] = true;
                                 saveGreetingMessageToDB(phoneNumber, 'telegram', operatorName, greetingMessage);
-                    
-                                // Отправляем обновление клиенту
+
                                 ws.send(JSON.stringify({
                                     phoneNumber: phoneNumber,
                                     message: greetingMessage,
@@ -271,66 +269,63 @@ wss.on('connection', (ws) => {
 
                 ws.send(JSON.stringify({ action: 'assignClient', success: true }));
             }
-        }
-
-        if (data.inputText && data.phoneNumber) {
-            const phoneNumber = data.phoneNumber;
-            const messageText = data.inputText;
-            const operatorName = data.operatorName || "Unknown Operator";
-        
-            const query = `
-                INSERT INTO messages (phone_number, platform, sender_name, message_text, message_type)
-                VALUES (?, ?, ?, ?, ?)
-            `;
-            connection.query(query, [phoneNumber, 'web', operatorName, messageText, 'operator'], (err, result) => {
-                if (err) {
-                    console.error('Error saving operator message to database:', err);
-                } else {
-                    console.log('Operator message saved to database');
-        
-                    wss.clients.forEach(client => {
-                        if (client.readyState === client.OPEN) {
-                            client.send(JSON.stringify({
-                                platform: 'web',
+            if (data.inputText && data.phoneNumber) {
+                const phoneNumber = data.phoneNumber;
+                const messageText = data.inputText;
+                const operatorName = data.operatorName || "Unknown Operator";
+    
+                const query = `
+                    INSERT INTO messages (phone_number, platform, sender_name, message_text, message_type)
+                    VALUES (?, ?, ?, ?, ?)
+                `;
+                connection.query(query, [phoneNumber, 'web', operatorName, messageText, 'operator'], (err, result) => {
+                    if (err) {
+                        console.error('Error saving operator message to database:', err);
+                    } else {
+                        console.log('Operator message saved to database');
+    
+                        wss.clients.forEach(client => {
+                            if (client.readyState === client.OPEN) {
+                                client.send(JSON.stringify({
+                                    platform: 'web',
+                                    phoneNumber: phoneNumber,
+                                    message: messageText,
+                                    from: 'operator'
+                                }));
+                            }
+                        });
+                    }
+                });
+    
+                if (platform === 'whatsapp') {
+                    whatsappClient.sendMessage(phoneNumber + '@c.us', greetingMessage)
+                        .then(() => {
+                            console.log('Greeting message sent to WhatsApp');
+                            greetingSentMap[phoneNumber] = true;
+                            saveGreetingMessageToDB(phoneNumber, 'whatsapp', operatorName, greetingMessage);
+    
+                            ws.send(JSON.stringify({
                                 phoneNumber: phoneNumber,
-                                message: messageText,
+                                message: greetingMessage,
                                 from: 'operator'
                             }));
-                        }
-                    });
+                        })
+                        .catch(err => console.error('Failed to send greeting message to WhatsApp:', err));
+                } else if (platform === 'telegram') {
+                    bot.telegram.sendMessage(phoneNumber, greetingMessage)
+                        .then(() => {
+                            console.log('Greeting message sent to Telegram');
+                            greetingSentMap[phoneNumber] = true;
+                            saveGreetingMessageToDB(phoneNumber, 'telegram', operatorName, greetingMessage);
+    
+                            ws.send(JSON.stringify({
+                                phoneNumber: phoneNumber,
+                                message: greetingMessage,
+                                from: 'operator'
+                            }));
+                        })
+                        .catch(err => console.error('Failed to send greeting message to Telegram:', err));
                 }
-            });
-        
-            if (platform === 'whatsapp') {
-                whatsappClient.sendMessage(phoneNumber + '@c.us', greetingMessage)
-                    .then(() => {
-                        console.log('Greeting message sent to WhatsApp');
-                        greetingSentMap[phoneNumber] = true;
-                        saveGreetingMessageToDB(phoneNumber, 'whatsapp', operatorName, greetingMessage);
-            
-                        // Отправляем обновление клиенту
-                        ws.send(JSON.stringify({
-                            phoneNumber: phoneNumber,
-                            message: greetingMessage,
-                            from: 'operator'
-                        }));
-                    })
-                    .catch(err => console.error('Failed to send greeting message to WhatsApp:', err));
-            } else if (platform === 'telegram') {
-                bot.telegram.sendMessage(phoneNumber, greetingMessage)
-                    .then(() => {
-                        console.log('Greeting message sent to Telegram');
-                        greetingSentMap[phoneNumber] = true;
-                        saveGreetingMessageToDB(phoneNumber, 'telegram', operatorName, greetingMessage);
-            
-                        // Отправляем обновление клиенту
-                        ws.send(JSON.stringify({
-                            phoneNumber: phoneNumber,
-                            message: greetingMessage,
-                            from: 'operator'
-                        }));
-                    })
-                    .catch(err => console.error('Failed to send greeting message to Telegram:', err));
             }
         }
     });
@@ -357,6 +352,25 @@ app.get('/api/clients', (req, res) => {
     });
 });
 
+app.get('/getRole', (req, res) => {
+    const username = req.session.username;
+    
+    const query = 'SELECT role FROM operators WHERE username = ? LIMIT 1';
+    
+    connection.query(query, [username], (err, result) => {
+        if (err) {
+            console.error('Ошибка при запросе к базе данных:', err);
+            return res.status(500).json({ error: 'Ошибка сервера' });
+        }
+
+        if (result.length === 0) {
+            return res.status(404).json({ error: 'Пользователь не найден' });
+        }
+
+        res.json({ role: result[0].role });
+    });
+})
+
 function saveGreetingMessageToDB(phoneNumber, platform, operatorName, messageText) {
     console.log(`Inserting greeting message into DB for ${platform} user: ${phoneNumber}`);
     const query = `
@@ -371,7 +385,6 @@ function saveGreetingMessageToDB(phoneNumber, platform, operatorName, messageTex
         }
     });
 }
-
 
 app.get('/api/messages/:phoneNumber', (req, res) => {
     const phoneNumber = req.params.phoneNumber;

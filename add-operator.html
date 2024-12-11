@@ -92,6 +92,11 @@
 
         <form class="add-operator__form" action="" onsubmit="register(event)">
             <input type="text" name="operator" id="username" placeholder="Имя Оператора" required minlength="3">
+            <select name="role" id="role" required>
+                <option value="admin">Администратор</option>
+                <option value="operator">Оператор</option>
+                <option value="analyst">Аналитик</option>
+            </select>
             <input type="password" name="password" id="password" placeholder="Пароль" required minlength="8">
             <button class="add-operator__button" type="submit">Создать</button>
         </form>
@@ -107,6 +112,7 @@
         function register(event) {
             event.preventDefault();
             const username = document.getElementById('username').value;
+            const role = document.getElementById('role').value;
             const password = document.getElementById('password').value;
 
             fetch('http://localhost:8082/auth/register', {
@@ -114,7 +120,7 @@
                 headers: {
                     'Content-Type': 'application/json'
                 },
-                body: JSON.stringify({ username, password })
+                body: JSON.stringify({ username, role, password })
             })
                 .then(response => response.text())
                 .then(data => {
