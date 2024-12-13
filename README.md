@@ -1,7 +1,8 @@
 # This is a universal messenger
+
 ## It includes various technologies such as telegraf, whatsapp-web.js, websoket, express, mysql not to mention html, css and js.
 
-### features:
+### Features:
 
 <ul>
   <li>Telegram and WhatsApp on one interface</li>
@@ -12,4 +13,4 @@
   <li>The system hides already occupied chats from other operators</li>
 </ul>
 
-<img src="./public/img/project.png">
+<img src="./public/img/project.png" width="500">
