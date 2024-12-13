@@ -1,4 +1,4 @@
-# This is a unversal messenger
+# This is a universal messenger
 ## It includes various technologies such as telegraf, whatsapp-web.js, websoket, express, mysql not to mention html, css and js.
 
 ### features:
