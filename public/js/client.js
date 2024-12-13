@@ -17,7 +17,9 @@ const contextMenu = document.createElement('div');
 contextMenu.className = 'contextmenu';
 contextMenu.innerHTML = `
     <ul class="contextmenu-list">
-	    <li class="contextmenu-item">${activeUser ? 'Не обслуживать' : 'Обслуживать'}</li>
+	    <li class="contextmenu-item">
+            ${activeUser ? 'Не обслуживать' : 'Обслуживать'}
+        </li>
         <li class="contextmenu-item">Удалить</li>
     </ul>`;
 
@@ -318,6 +320,7 @@ window.addEventListener('DOMContentLoaded', async () => {
 
     const roleElement = document.querySelector('.page__settings-operator-role');
     const addOperatorLink = document.querySelector('.page__settings-add-operator');
+    const deleteDb = document.querySelector('.page__settings-delete-db');
 
     const roleTranslations = {
         ru: {
@@ -349,6 +352,7 @@ window.addEventListener('DOMContentLoaded', async () => {
 
             roleElement.textContent = translatedRole;
             addOperatorLink.style.display = data.role === 'admin' ? 'flex' : 'none';
+            deleteDb.style.display = data.role === 'admin' ? 'flex' : 'none';
         } else {
             roleElement.textContent = roleTranslations[currentLanguage].unknown;
             addOperatorLink.style.display = 'none';
@@ -365,6 +369,26 @@ window.addEventListener('DOMContentLoaded', async () => {
         } else {
             window.location.href = '/index';
         }
+    });
+
+    document.querySelector('.page__settings-delete-db').addEventListener('click', () => {
+        const clearDbPrompt = document.querySelector('.confirm');
+        clearDbPrompt.classList.add('confirm--opened');
+
+        clearDbPrompt.querySelector('.confirm__ok').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const response = await fetch(`http://${URL}:8082/clearDb`, {
+                method: 'POST',
+            });
+            window.location.reload();
+            if (!response.ok) {
+                throw new Error('Не удалось очистить БД');
+            }
+        });
+
+        clearDbPrompt.querySelector('.confirm__cancel').addEventListener('click', () => {
+            clearDbPrompt.classList.remove('confirm--opened');
+        });
     });
 
     if (roleElement.textContent === roleTranslations.ru.analyst) {

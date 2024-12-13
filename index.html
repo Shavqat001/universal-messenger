@@ -192,11 +192,13 @@
             <h2 class="page__settings_user-name"></h2>
             <p class="page__settings-operator-role">Оператор</p>
 
-            <form action="" class="page__settings-form">
+            <form class="page__settings-form" action="">
                 <button type="submit" class="page__settings-add-operator">Добавить оператора</button>
             </form>
 
-            <button class=" users__logout">
+            <button class="page__settings-delete-db">Очистить базу</button>
+
+            <button class="users__logout">
                 <span>Log</span>
                 <svg width="20" height="20">
                     <use xlink:href="#logout"></use>
@@ -270,6 +272,18 @@
             <div class="messages__black-layer"></div>
         </section>
     </main>
+
+    <div class="confirm">
+        <p class="confirm__message">
+            Вы точно хотите очистить сообщения с клиентами?
+        </p>
+        <form class="confirm__ok" action="">
+            <button type="submit" class="confirm__buttons confirm__ok-btn">
+                Да
+            </button>
+            <button type="button" class="confirm__buttons confirm__cancel">Нет</button>
+        </form>
+    </div>
 
     <audio id="notification-sound" src="/sounds/notification.mp3" preload="auto"></audio>
     <script src="/js/client.js"></script>

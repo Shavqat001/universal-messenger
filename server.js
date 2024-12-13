@@ -273,7 +273,7 @@ wss.on('connection', (ws) => {
                 const phoneNumber = data.phoneNumber;
                 const messageText = data.inputText;
                 const operatorName = data.operatorName || "Unknown Operator";
-    
+
                 const query = `
                     INSERT INTO messages (phone_number, platform, sender_name, message_text, message_type)
                     VALUES (?, ?, ?, ?, ?)
@@ -283,7 +283,7 @@ wss.on('connection', (ws) => {
                         console.error('Error saving operator message to database:', err);
                     } else {
                         console.log('Operator message saved to database');
-    
+
                         wss.clients.forEach(client => {
                             if (client.readyState === client.OPEN) {
                                 client.send(JSON.stringify({
@@ -296,14 +296,14 @@ wss.on('connection', (ws) => {
                         });
                     }
                 });
-    
+
                 if (platform === 'whatsapp') {
                     whatsappClient.sendMessage(phoneNumber + '@c.us', greetingMessage)
                         .then(() => {
                             console.log('Greeting message sent to WhatsApp');
                             greetingSentMap[phoneNumber] = true;
                             saveGreetingMessageToDB(phoneNumber, 'whatsapp', operatorName, greetingMessage);
-    
+
                             ws.send(JSON.stringify({
                                 phoneNumber: phoneNumber,
                                 message: greetingMessage,
@@ -317,7 +317,7 @@ wss.on('connection', (ws) => {
                             console.log('Greeting message sent to Telegram');
                             greetingSentMap[phoneNumber] = true;
                             saveGreetingMessageToDB(phoneNumber, 'telegram', operatorName, greetingMessage);
-    
+
                             ws.send(JSON.stringify({
                                 phoneNumber: phoneNumber,
                                 message: greetingMessage,
@@ -354,9 +354,9 @@ app.get('/api/clients', (req, res) => {
 
 app.get('/getRole', (req, res) => {
     const username = req.session.username;
-    
+
     const query = 'SELECT role FROM operators WHERE username = ? LIMIT 1';
-    
+
     connection.query(query, [username], (err, result) => {
         if (err) {
             console.error('Ошибка при запросе к базе данных:', err);
@@ -395,6 +395,18 @@ app.get('/api/messages/:phoneNumber', (req, res) => {
             res.status(500).json({ error: 'Internal Server Error' });
         } else {
             res.json(results);
+        }
+    });
+});
+
+app.post('/clearDb', (req, res) => {
+    connection.query(`TRUNCATE TABLE messages`, (err, results) => {
+        if (err) {
+            console.error('Error truncating table:', err);
+            res.status(500).json({ error: 'Server error' });
+        } else {
+            console.log('Данные из БД очищены успешно');
+            res.status(200).json({ success: true, message: 'Database cleared' });
         }
     });
 });

@@ -74,7 +74,8 @@
     color: #333;
 }
 
-.page__settings-add-operator {
+.page__settings-add-operator,
+.page__settings-delete-db {
     display: flex;
     width: max-content;
     letter-spacing: 1px;
@@ -87,6 +88,22 @@
     color: #fff;
     font-size: 20px;
     transition: 300ms;
+}
+
+.page__settings-delete-db {
+    background-color: tomato;
+    margin-top: 20px;
+}
+
+.page__settings-delete-db--light {
+    border: 2px solid tomato;
+    color: #333;
+    background-color: transparent;
+}
+
+.page__settings-delete-db--light:hover {
+    color: #fff;
+    background-color: tomato;
 }
 
 .page__settings-add-operator--light {
