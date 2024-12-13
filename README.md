@@ -13,4 +13,5 @@
   <li>The system hides already occupied chats from other operators</li>
 </ul>
 
-<img src="./public/img/project.png" width="500">
+<img src="./public/img/project.png" width="400">
+<img src="./public/img/project-white.png" width="400">
