@@ -95,10 +95,6 @@ function handleDynamicElements() {
     });
 }
 
-setInterval(() => {
-    handleDynamicElements();
-}, 1000);
-
 window.addEventListener('load', () => {
     toggleClasses(isLight);
 });
