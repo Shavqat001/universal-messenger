@@ -71,15 +71,11 @@ function addUserToUI(user) {
     userElement.addEventListener('click', (e) => {
         setActiveUser(user.phoneNumber);
         if (e.target.classList.contains('users__edit-btn')) {
-            contextMenu.style.height = "auto";
-            contextMenu.style.padding = "10px";
+            contextMenu.style.display = "block";
             contextMenu.style.left = `${e.pageX}px`;
             contextMenu.style.top = `${e.pageY}px`;
-            console.log(true);
         } else {
-            contextMenu.style.height = "auto";
-            contextMenu.style.padding = "0 10px";
-            console.log(true);
+            contextMenu.style.display = "none";
         }
     });
     usersList.appendChild(userElement);
@@ -91,33 +87,36 @@ function fetchMessages(chatId) {
 
 function loadClients() {
     fetch(`http://${URL}:8082/api/clients`)
-        .then(response => response.json())
+        .then(response => {
+            if (!response.ok) throw new Error(`Failed to load clients with status ${response.status}`);
+            return response.json();
+        })
         .then(clients => {
             usersList.innerHTML = '';
+            users = [];
 
             clients.forEach(client => {
-                let user = users.find(u => u.phoneNumber === client.phone_number);
+                const user = {
+                    phoneNumber: client.phone_number,
+                    name: client.sender_name || 'Unknown User',
+                    platform: client.platform,
+                    profilePic: client.sender_profile_pic || '/img/avatar.jpg',
+                    messages: [],
+                };
+                users.push(user);
 
-                if (!user) {
-                    user = {
-                        phoneNumber: client.phone_number,
-                        name: client.sender_name || 'Unknown User',
-                        platform: client.platform,
-                        profilePic: client.sender_profile_pic || '/img/avatar.jpg',
-                        messages: []
-                    };
-                    users.push(user);
-                }
+                addUserToUI(user);
 
                 fetch(`http://${URL}:8082/api/last_message/${client.phone_number}`)
-                    .then(response => response.json())
+                    .then(response => {
+                        if (!response.ok) throw new Error(`Failed to load last message for ${client.phone_number}`);
+                        return response.json();
+                    })
                     .then(lastMessage => {
-                        let userElement = document.getElementById(client.phone_number);
-                        if (!userElement) {
-                            addUserToUI(user);
-                        } else {
-                            userElement.querySelector('.users__picture img').src = user.profilePic; // Используем profilePic из user
-                            userElement.querySelector('.users__text').textContent = lastMessage.message_text || '';
+                        user.lastMessage = lastMessage.message_text || 'No messages yet';
+                        const userElement = document.getElementById(client.phone_number);
+                        if (userElement) {
+                            userElement.querySelector('.users__text').textContent = user.lastMessage;
                         }
                     })
                     .catch(err => console.error('Error loading last message:', err));
@@ -138,7 +137,7 @@ function addMessageToUI(phoneNumber, message, from) {
                 <span class="messages__item__text">${message}</span>
                 <span class="messages__item_tail"></span>
             </li>`;
-        scrollToBottom();
+        setTimeout(() => scrollToBottom(), 100);
     } else {
         const userElement = document.getElementById(phoneNumber);
         if (userElement) {
@@ -167,6 +166,8 @@ form.addEventListener('submit', (e) => {
             addMessageToUI(activeUser, messageText, 'operator');
             messageInput.value = '';
         }
+    } else {
+        console.warn('No active user or message is empty');
     }
 });
 
@@ -174,8 +175,13 @@ function setActiveUser(chatId) {
     const operatorName = localStorage.getItem('operator');
     const user = users.find(u => u.phoneNumber === chatId);
     const platform = user ? user.platform : 'unknown';
-    let role = document.querySelector('.page__settings-operator-role');
 
+    if (!user) {
+        console.error(`User with phone number ${chatId} not found`);
+        return;
+    }
+
+    let role = document.querySelector('.page__settings-operator-role');
     if (role.textContent !== 'Аналитик') {
         socket.send(JSON.stringify({
             action: 'setActiveUser',
@@ -211,7 +217,7 @@ function setActiveUser(chatId) {
                 <span class="messages__item_tail"></span>
             </li>`;
         });
-        scrollToBottom();
+        setTimeout(() => scrollToBottom(), 100);
     }
 
     if (currentElement) {
@@ -219,7 +225,10 @@ function setActiveUser(chatId) {
     }
 
     fetch(`http://${URL}:8082/api/messages/${chatId}`)
-        .then(response => response.json())
+        .then(response => {
+            if (!response.ok) throw new Error(`Failed to fetch messages with status ${response.status}`);
+            return response.json();
+        })
         .then(data => {
             messagesList.innerHTML = '';
 
@@ -238,15 +247,17 @@ function setActiveUser(chatId) {
                     <span class="messages__item_tail"></span>
                 </li>`;
             });
-            scrollToBottom();
+            setTimeout(() => scrollToBottom(), 100);
         })
         .catch(err => console.error('Error fetching messages:', err));
 }
 
-
 function loadMessagesForUser(phoneNumber) {
     fetch(`http://${URL}:8082/api/messages/${phoneNumber}`)
-        .then(response => response.json())
+        .then(response => {
+            if (!response.ok) throw new Error(`Failed to load messages with status ${response.status}`);
+            return response.json();
+        })
         .then(data => data.forEach(msg => addMessageToUI(phoneNumber, msg.message_text, msg.message_type)))
         .catch(err => console.error('Error loading messages:', err));
 }
@@ -263,53 +274,57 @@ function cancelActiveUser() {
 }
 
 function handleIncomingMessage(event) {
-    const data = JSON.parse(event.data);
+    try {
+        const data = JSON.parse(event.data);
 
-    if (data.action === 'clientTaken') {
-        cancelActiveUser();
-        alert(data.message);
-        return;
-    }
-
-    if (data.action === 'assignClient' && data.phoneNumber === activeUser) {
-        loadChatMessages(data.phoneNumber);
-        return;
-    }
-
-    if (data.message && data.phoneNumber) {
-        let user = users.find(u => u.phoneNumber === data.phoneNumber);
-
-        if (!user) {
-            user = {
-                phoneNumber: data.phoneNumber,
-                name: data.name || 'Unknown User',
-                platform: data.platform,
-                profilePic: data.profilePic || '/img/avatar.jpg',
-                lastMessage: data.message,
-                messages: []
-            };
-            users.push(user);
-            addUserToUI(user);
-        } else {
-            user.lastMessage = data.message;
-            const userElement = document.getElementById(user.phoneNumber);
-            if (userElement) {
-                userElement.querySelector('.users__text').textContent = data.message;
-            }
+        if (data.action === 'clientTaken') {
+            cancelActiveUser();
+            alert(data.message);
+            return;
         }
 
-        if (!user.messages.some(msg => msg.text === data.message && msg.from === (data.from || data.platform))) {
-            user.messages.push({ text: data.message, from: data.from || data.platform });
+        if (data.action === 'assignClient' && data.phoneNumber === activeUser) {
+            loadMessagesForUser(data.phoneNumber);
+            return;
+        }
 
-            if (activeUser === data.phoneNumber) {
-                addMessageToUI(data.phoneNumber, data.message, data.from || data.platform);
+        if (data.message && data.phoneNumber) {
+            let user = users.find(u => u.phoneNumber === data.phoneNumber);
+
+            if (!user) {
+                user = {
+                    phoneNumber: data.phoneNumber,
+                    name: data.name || 'Unknown User',
+                    platform: data.platform,
+                    profilePic: data.profilePic || '/img/avatar.jpg',
+                    lastMessage: data.message,
+                    messages: []
+                };
+                users.push(user);
+                addUserToUI(user);
             } else {
-                const userElement = document.getElementById(data.phoneNumber);
+                user.lastMessage = data.message;
+                const userElement = document.getElementById(user.phoneNumber);
                 if (userElement) {
-                    userElement.querySelector('.new-message-indicator').classList.add('new-message-indicator--visible');
+                    userElement.querySelector('.users__text').textContent = data.message;
+                }
+            }
+
+            if (!user.messages.some(msg => msg.text === data.message && msg.from === (data.from || data.platform))) {
+                user.messages.push({ text: data.message, from: data.from || data.platform });
+
+                if (activeUser === data.phoneNumber) {
+                    addMessageToUI(data.phoneNumber, data.message, data.from || data.platform);
+                } else {
+                    const userElement = document.getElementById(data.phoneNumber);
+                    if (userElement) {
+                        userElement.querySelector('.new-message-indicator').classList.add('new-message-indicator--visible');
+                    }
                 }
             }
         }
+    } catch (error) {
+        console.error('Error handling incoming message:', error);
     }
 }
 
@@ -411,6 +426,5 @@ document.body.addEventListener('contextmenu', (e) => {
 })
 
 window.addEventListener('click', () => {
-    contextMenu.style.height = "0";
-    contextMenu.style.padding = "0 10px";
-})
+    contextMenu.style.display = "none";
+});

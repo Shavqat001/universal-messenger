@@ -1,4 +1,4 @@
-let themeToggle = document.querySelector('.page__theme');
+﻿let themeToggle = document.querySelector('.page__theme');
 let usersAside = document.querySelector('.users');
 let pageSettings = document.querySelector('.page__settings');
 let blackLayer = document.querySelector('.messages__black-layer');
@@ -94,6 +94,10 @@ function handleDynamicElements() {
         }
     });
 }
+
+// setInterval(() => {
+//     handleDynamicElements();
+// }, 1000);
 
 window.addEventListener('load', () => {
     toggleClasses(isLight);

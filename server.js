@@ -1,4 +1,4 @@
-require('dotenv').config();
+﻿require('dotenv').config();
 const express = require('express');
 const cors = require('cors');
 const { Server } = require('ws');
@@ -36,10 +36,28 @@ function isAuthenticated(req, res, next) {
     }
 }
 
+function saveGreetingMessageToDB(phoneNumber, platform, operatorName, messageText) {
+    const query = `
+        INSERT INTO messages (phone_number, platform, sender_name, message_text, message_type)
+        VALUES (?, ?, ?, ?, ?)
+    `;
+    connection.query(query, [phoneNumber, platform, operatorName, messageText, 'operator'], (err, result) => {
+        if (err) {
+            console.error('Error saving greeting message to database:', err);
+        }
+    });
+}
+
 app.use('/auth', authRoutes);
 
-app.get('/', (req, res) => res.sendFile(path.resolve('authorization.html')));
-app.get('/add-operator', isAuthenticated, (req, res) => res.sendFile(path.resolve('add-operator.html')));
+app.get('/', (req, res) => {
+    res.sendFile(path.resolve('authorization.html'));
+});
+
+app.get('/add-operator', isAuthenticated, (req, res) => {
+    res.sendFile(path.resolve('add-operator.html'));
+});
+
 app.get('/index', isAuthenticated, (req, res) => {
     if (!req.session.username) {
         return res.redirect('/authorization');
@@ -47,7 +65,80 @@ app.get('/index', isAuthenticated, (req, res) => {
     res.sendFile(path.resolve('index.html'));
 });
 
-app.get('/auth', (req, res) => res.sendFile(path.resolve(__dirname, 'authorization.html')));
+app.get('/api/messages/:phoneNumber', (req, res) => {
+    const phoneNumber = req.params.phoneNumber;
+
+    const query = `
+        SELECT * 
+        FROM messages 
+        WHERE phone_number = ? 
+        ORDER BY timestamp ASC
+    `;
+
+    connection.query(query, [phoneNumber], (err, results) => {
+        if (err) {
+            console.error(`Error fetching messages for ${phoneNumber}:`, err);
+            res.status(500).json({ error: 'Internal Server Error' });
+        } else if (results.length === 0) {
+            res.status(404).json({ error: 'No messages found' });
+        } else {
+            res.status(200).json(results);
+        }
+    });
+});
+
+app.get('/api/clients', (req, res) => {
+    const query = `
+    SELECT DISTINCT 
+        m.phone_number, 
+        m.sender_name, 
+        m.platform, 
+        m.sender_profile_pic
+    FROM 
+        messages m
+    WHERE 
+        m.message_type = 'client'
+`;
+    connection.query(query, (err, results) => {
+        if (err) {
+            console.error('Error fetching clients:', err);
+            res.status(500).json({ error: 'Internal Server Error' });
+        } else {
+            res.status(200).json(results);
+        }
+    });
+});
+
+app.get('/getRole', (req, res) => {
+    const username = req.session.username;
+    const query = 'SELECT role FROM operators WHERE username = ? LIMIT 1';
+    connection.query(query, [username], (err, result) => {
+        if (err) {
+            console.error('Ошибка при запросе роли пользователя:', err);
+            res.status(500).json({ error: 'Ошибка сервера' });
+        } else if (result.length === 0) {
+            res.status(404).json({ error: 'Пользователь не найден' });
+        } else {
+            res.status(200).json({ role: result[0].role });
+        }
+    });
+});
+
+app.post('/clearDb', (req, res) => {
+    connection.query(`TRUNCATE TABLE messages`, (err, results) => {
+        if (err) {
+            console.error('Error truncating table:', err);
+            res.status(500).json({ error: 'Server error' });
+        } else {
+            console.log('Данные из БД очищены успешно');
+            res.status(200).json({ success: true, message: 'Database cleared' });
+        }
+    });
+});
+
+app.get('/auth', (req, res) => {
+    res.sendFile(path.resolve(__dirname, 'authorization.html'));
+});
 
 app.get('/api/last_message/:phoneNumber', (req, res) => {
     const phoneNumber = req.params.phoneNumber;
@@ -64,18 +155,19 @@ app.get('/api/last_message/:phoneNumber', (req, res) => {
 });
 
 app.post('/api/save_message', (req, res) => {
-    const { phoneNumber, messageText, messageType, platform } = req.body;
+    const { phoneNumber, messageText, platform, isOperator } = req.body;
 
+    const messageType = isOperator ? 'operator' : 'client'; // Указание типа сообщения
     const query = `
         INSERT INTO messages (phone_number, platform, message_text, message_type)
         VALUES (?, ?, ?, ?)
     `;
     connection.query(query, [phoneNumber, platform, messageText, messageType], (err, result) => {
         if (err) {
-            console.error('Error saving message to database:', err);
-            res.status(500).json({ error: 'Failed to save message to database' });
+            console.error('Error saving message:', err);
+            res.status(500).json({ error: 'Failed to save message' });
         } else {
-            res.status(200).json({ success: true, message: 'Message saved successfully' });
+            res.status(200).json({ success: true });
         }
     });
 });
@@ -89,7 +181,9 @@ const wss = new Server({ port: process.env.WS_PORT });
 
 const bot = new Telegraf(process.env.TELEGRAM_TOKEN);
 
-bot.start();
+bot.start((ctx) => {
+    console.log('Telegram bot started by:', ctx.chat.id);
+});
 
 bot.on('text', async (ctx) => {
     const chatId = ctx.chat.id;
@@ -113,8 +207,8 @@ bot.on('text', async (ctx) => {
         if (client.readyState === client.OPEN) {
             client.send(JSON.stringify({
                 platform: 'telegram',
-                phoneNumber: phoneNumber,
-                name: name,
+                phoneNumber,
+                name,
                 message: ctx.message.text,
                 profilePic: profilePicUrl
             }));
@@ -128,8 +222,6 @@ bot.on('text', async (ctx) => {
     connection.query(query, [phoneNumber, 'telegram', name, profilePicUrl, ctx.message.text, 'client'], (err, result) => {
         if (err) {
             console.error('Error saving client message to database:', err);
-        } else {
-            console.log('Client message saved to database');
         }
     });
 });
@@ -143,7 +235,6 @@ const whatsappClient = new Client({
 });
 
 whatsappClient.on('qr', (qr) => qrcode.generate(qr, { small: true }));
-whatsappClient.on('ready', () => console.log('WhatsApp client is ready'));
 
 whatsappClient.on('message', async message => {
     const contact = await whatsappClient.getContactById(message.from);
@@ -173,6 +264,7 @@ whatsappClient.on('message', async message => {
         INSERT INTO messages (phone_number, platform, sender_name, sender_profile_pic, message_text, message_type)
         VALUES (?, ?, ?, ?, ?, ?)
     `;
+
     connection.query(query, [realPhoneNumber, 'whatsapp', displayName, profilePicUrl, message.body, 'client'], (err, result) => {
         if (err) throw err;
     });
@@ -212,7 +304,7 @@ async function getTelegramProfilePic(chatId) {
 }
 
 whatsappClient.initialize()
-    .then(() => '')
+    .then(() => console.log('WhatsApp client initialized'))
     .catch(err => console.error('Failed to initialize WhatsApp client:', err));
 
 const clientsMap = {};
@@ -239,7 +331,6 @@ wss.on('connection', (ws) => {
                     if (platform === 'whatsapp') {
                         whatsappClient.sendMessage(phoneNumber + '@c.us', greetingMessage)
                             .then(() => {
-                                console.log('Greeting message sent to WhatsApp');
                                 greetingSentMap[phoneNumber] = true;
                                 saveGreetingMessageToDB(phoneNumber, 'whatsapp', operatorName, greetingMessage);
 
@@ -253,7 +344,6 @@ wss.on('connection', (ws) => {
                     } else if (platform === 'telegram') {
                         bot.telegram.sendMessage(phoneNumber, greetingMessage)
                             .then(() => {
-                                console.log('Greeting message sent to Telegram');
                                 greetingSentMap[phoneNumber] = true;
                                 saveGreetingMessageToDB(phoneNumber, 'telegram', operatorName, greetingMessage);
 
@@ -269,63 +359,49 @@ wss.on('connection', (ws) => {
 
                 ws.send(JSON.stringify({ action: 'assignClient', success: true }));
             }
-            if (data.inputText && data.phoneNumber) {
-                const phoneNumber = data.phoneNumber;
-                const messageText = data.inputText;
-                const operatorName = data.operatorName || "Unknown Operator";
+        }
 
-                const query = `
-                    INSERT INTO messages (phone_number, platform, sender_name, message_text, message_type)
-                    VALUES (?, ?, ?, ?, ?)
-                `;
-                connection.query(query, [phoneNumber, 'web', operatorName, messageText, 'operator'], (err, result) => {
-                    if (err) {
-                        console.error('Error saving operator message to database:', err);
-                    } else {
-                        console.log('Operator message saved to database');
+        if (data.inputText && data.phoneNumber) {
+            const phoneNumber = data.phoneNumber;
+            const messageText = data.inputText;
+            const operatorName = data.operatorName || "Unknown Operator";
 
-                        wss.clients.forEach(client => {
-                            if (client.readyState === client.OPEN) {
-                                client.send(JSON.stringify({
-                                    platform: 'web',
-                                    phoneNumber: phoneNumber,
-                                    message: messageText,
-                                    from: 'operator'
-                                }));
-                            }
-                        });
-                    }
-                });
+            const query = `
+                INSERT INTO messages (phone_number, platform, sender_name, message_text, message_type)
+                VALUES (?, ?, ?, ?, ?)
+            `;
 
-                if (platform === 'whatsapp') {
-                    whatsappClient.sendMessage(phoneNumber + '@c.us', greetingMessage)
-                        .then(() => {
-                            console.log('Greeting message sent to WhatsApp');
-                            greetingSentMap[phoneNumber] = true;
-                            saveGreetingMessageToDB(phoneNumber, 'whatsapp', operatorName, greetingMessage);
-
-                            ws.send(JSON.stringify({
+            connection.query(query, [phoneNumber, 'web', operatorName, messageText, 'operator'], (err, result) => {
+                if (err) {
+                    console.error('Error saving operator message to database:', err);
+                } else {
+                    wss.clients.forEach(client => {
+                        if (client.readyState === client.OPEN) {
+                            console.log('Sending operator message via WebSocket:', {
+                                platform: 'web',
                                 phoneNumber: phoneNumber,
-                                message: greetingMessage,
+                                message: messageText
+                            });
+
+                            client.send(JSON.stringify({
+                                platform: 'web',
+                                phoneNumber: phoneNumber,
+                                message: messageText,
                                 from: 'operator'
                             }));
-                        })
-                        .catch(err => console.error('Failed to send greeting message to WhatsApp:', err));
-                } else if (platform === 'telegram') {
-                    bot.telegram.sendMessage(phoneNumber, greetingMessage)
-                        .then(() => {
-                            console.log('Greeting message sent to Telegram');
-                            greetingSentMap[phoneNumber] = true;
-                            saveGreetingMessageToDB(phoneNumber, 'telegram', operatorName, greetingMessage);
-
-                            ws.send(JSON.stringify({
-                                phoneNumber: phoneNumber,
-                                message: greetingMessage,
-                                from: 'operator'
-                            }));
-                        })
-                        .catch(err => console.error('Failed to send greeting message to Telegram:', err));
+                        }
+                    });
                 }
+            });
+
+            if (data.platform === 'telegram') {
+                bot.telegram.sendMessage(phoneNumber, messageText)
+                    .then(() => console.log('Operator message sent to Telegram:', phoneNumber))
+                    .catch(err => console.error('Failed to send operator message to Telegram:', err));
+            } else if (data.platform === 'whatsapp') {
+                whatsappClient.sendMessage(phoneNumber + '@c.us', messageText)
+                    .then(() => console.log('Operator message sent to WhatsApp:', phoneNumber))
+                    .catch(err => console.error('Failed to send operator message to WhatsApp:', err));
             }
         }
     });
@@ -335,78 +411,6 @@ wss.on('connection', (ws) => {
             if (clientsMap[client] === ws.operatorName) {
                 delete clientsMap[client];
             }
-        }
-    });
-});
-
-app.get('/api/clients', (req, res) => {
-    const query = 'SELECT DISTINCT phone_number, sender_name, platform, sender_profile_pic FROM messages';
-
-    connection.query(query, (err, results) => {
-        if (err) {
-            console.error('Error fetching clients:', err);
-            res.status(500).json({ error: 'Internal Server Error' });
-        } else {
-            res.json(results);
-        }
-    });
-});
-
-app.get('/getRole', (req, res) => {
-    const username = req.session.username;
-
-    const query = 'SELECT role FROM operators WHERE username = ? LIMIT 1';
-
-    connection.query(query, [username], (err, result) => {
-        if (err) {
-            console.error('Ошибка при запросе к базе данных:', err);
-            return res.status(500).json({ error: 'Ошибка сервера' });
-        }
-
-        if (result.length === 0) {
-            return res.status(404).json({ error: 'Пользователь не найден' });
-        }
-
-        res.json({ role: result[0].role });
-    });
-})
-
-function saveGreetingMessageToDB(phoneNumber, platform, operatorName, messageText) {
-    console.log(`Inserting greeting message into DB for ${platform} user: ${phoneNumber}`);
-    const query = `
-        INSERT INTO messages (phone_number, platform, sender_name, message_text, message_type)
-        VALUES (?, ?, ?, ?, ?)
-    `;
-    connection.query(query, [phoneNumber, platform, operatorName, messageText, 'operator'], (err, result) => {
-        if (err) {
-            console.error('Error saving greeting message to database:', err);
-        } else {
-            console.log('Greeting message saved to database');
-        }
-    });
-}
-
-app.get('/api/messages/:phoneNumber', (req, res) => {
-    const phoneNumber = req.params.phoneNumber;
-    const query = 'SELECT * FROM messages WHERE phone_number = ? ORDER BY timestamp ASC';
-    connection.query(query, [phoneNumber], (err, results) => {
-        if (err) {
-            console.error('Error fetching messages:', err);
-            res.status(500).json({ error: 'Internal Server Error' });
-        } else {
-            res.json(results);
-        }
-    });
-});
-
-app.post('/clearDb', (req, res) => {
-    connection.query(`TRUNCATE TABLE messages`, (err, results) => {
-        if (err) {
-            console.error('Error truncating table:', err);
-            res.status(500).json({ error: 'Server error' });
-        } else {
-            console.log('Данные из БД очищены успешно');
-            res.status(200).json({ success: true, message: 'Database cleared' });
         }
     });
 });
