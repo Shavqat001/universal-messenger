@@ -17,7 +17,6 @@
         <form class="add-operator__form" action="" onsubmit="register(event)">
             <input type="text" name="operator" id="username" placeholder="Имя Оператора" required minlength="3">
             <select name="role" id="role" required>
-                <option value="admin">Администратор</option>
                 <option value="operator" selected>Оператор</option>
                 <option value="analyst">Аналитик</option>
             </select>
@@ -40,7 +39,7 @@
             const role = document.getElementById('role').value;
             const password = document.getElementById('password').value;
 
-            fetch('http://localhost:8082/auth/register', {
+            fetch('http://172.16.5.5:8082/auth/register', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json'

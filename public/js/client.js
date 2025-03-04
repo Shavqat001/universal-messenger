@@ -1,4 +1,4 @@
-﻿const URL = 'localhost';
+﻿const URL = '172.16.5.5';
 const socket = new WebSocket(`ws://${URL}:8081`);
 let activeUser = null;
 let users = [];
