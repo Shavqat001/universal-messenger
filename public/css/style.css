@@ -1,11 +1,8 @@
-/* GLOBAL */
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
 
-@import url('./global/fonts.css');
-@import url('./global/global.css');
 @import url('./global/normalize.css');
 @import url('./global/variable.css');
-
-/* BLOCKS */
+@import url('./global/global.css');
 
 @import url('./blocks/auth.css');
 @import url('./blocks/messages.css');

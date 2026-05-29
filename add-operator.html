@@ -1,63 +1,213 @@
-﻿<!DOCTYPE html>
-<html lang="en">
-
+<!DOCTYPE html>
+<html lang="ru">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Добавление Оператора</title>
-    <link rel="stylesheet" href="/css/blocks/add-operator.css">
+    <title>Добавление оператора</title>
     <link rel="shortcut icon" href="/assets/favicon.ico">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+        body {
+            font-family: 'Inter', system-ui, sans-serif;
+            background: radial-gradient(ellipse at 60% 40%, #1e1b4b 0%, #0f172a 70%);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #f1f5f9;
+            -webkit-font-smoothing: antialiased;
+        }
+
+        .card {
+            width: 100%;
+            max-width: 420px;
+            padding: 40px 36px;
+            background: #1e293b;
+            border: 1px solid rgba(255,255,255,0.07);
+            border-radius: 20px;
+            box-shadow: 0 4px 40px rgba(0,0,0,0.5);
+        }
+
+        .card__header {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            margin-bottom: 32px;
+        }
+
+        .card__back {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            width: 36px;
+            height: 36px;
+            border-radius: 10px;
+            background: #263045;
+            border: 1px solid rgba(255,255,255,0.07);
+            color: #94a3b8;
+            text-decoration: none;
+            font-size: 18px;
+            transition: background 180ms, color 180ms;
+            flex-shrink: 0;
+        }
+
+        .card__back:hover { background: #2d3a50; color: #f1f5f9; }
+
+        .card__title {
+            font-size: 22px;
+            font-weight: 700;
+            letter-spacing: -0.4px;
+        }
+
+        .form {
+            display: flex;
+            flex-direction: column;
+            gap: 14px;
+        }
+
+        .form__label {
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+            font-size: 13px;
+            font-weight: 500;
+            color: #94a3b8;
+        }
+
+        .form__input,
+        .form__select {
+            padding: 12px 14px;
+            background: #263045;
+            border: 1px solid rgba(255,255,255,0.07);
+            border-radius: 10px;
+            color: #f1f5f9;
+            font-size: 15px;
+            font-family: inherit;
+            outline: none;
+            transition: border-color 180ms;
+            appearance: none;
+        }
+
+        .form__input::placeholder { color: #475569; }
+        .form__input:focus,
+        .form__select:focus { border-color: #6366f1; }
+
+        .form__select-wrap {
+            position: relative;
+        }
+
+        .form__select-wrap::after {
+            content: '▾';
+            position: absolute;
+            right: 14px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: #94a3b8;
+            pointer-events: none;
+            font-size: 14px;
+        }
+
+        .form__select option { background: #1e293b; }
+
+        .form__submit {
+            margin-top: 6px;
+            padding: 13px;
+            border: none;
+            border-radius: 10px;
+            background: #6366f1;
+            color: #fff;
+            font-size: 15px;
+            font-weight: 600;
+            font-family: inherit;
+            cursor: pointer;
+            transition: background 180ms, transform 100ms;
+        }
+
+        .form__submit:hover  { background: #4f46e5; }
+        .form__submit:active { transform: scale(0.98); }
+
+        .notify {
+            font-size: 13px;
+            text-align: center;
+            min-height: 18px;
+            color: #ef4444;
+        }
+
+        .notify--success { color: #22c55e; }
+    </style>
 </head>
-
 <body>
-    <div class="add-operator">
-        <a class="add-operator__back-btn" href="/index"></a>
-        <h2 class="add-operator__title">Создание оператора</h2>
+    <div class="card">
+        <div class="card__header">
+            <a class="card__back" href="/index" title="Назад">←</a>
+            <h1 class="card__title">Создание оператора</h1>
+        </div>
 
-        <form class="add-operator__form" action="" onsubmit="register(event)">
-            <input type="text" name="operator" id="username" placeholder="Имя Оператора" required minlength="3">
-            <select name="role" id="role" required>
-                <option value="operator" selected>Оператор</option>
-                <option value="analyst">Аналитик</option>
-            </select>
-            <button class="role-drop-down"></button>
-            <input type="password" name="password" id="password" placeholder="Пароль" required minlength="8">
-            <button class="add-operator__button" type="submit">Создать</button>
+        <form class="form" onsubmit="register(event)">
+            <label class="form__label">
+                Имя оператора
+                <input class="form__input" type="text" id="username" placeholder="username" required minlength="3" autocomplete="off">
+            </label>
+
+            <label class="form__label">
+                Роль
+                <div class="form__select-wrap">
+                    <select class="form__select" id="role" required>
+                        <option value="operator" selected>Оператор</option>
+                        <option value="analyst">Аналитик</option>
+                        <option value="admin">Администратор</option>
+                    </select>
+                </div>
+            </label>
+
+            <label class="form__label">
+                Пароль
+                <input class="form__input" type="password" id="password" placeholder="Минимум 8 символов" required minlength="8">
+            </label>
+
+            <button class="form__submit" type="submit">Создать оператора</button>
         </form>
 
-        <p id="notify"></p>
+        <p class="notify" id="notify"></p>
     </div>
 
     <script>
-        window.addEventListener('load', () => {
-            document.querySelector(`input[type='text']`).focus()
-        });
+        document.querySelector('#username').focus();
 
-        function register(event) {
+        async function register(event) {
             event.preventDefault();
-            const username = document.getElementById('username').value;
-            const role = document.getElementById('role').value;
+            const username = document.getElementById('username').value.trim();
+            const role     = document.getElementById('role').value;
             const password = document.getElementById('password').value;
+            const notify   = document.getElementById('notify');
 
-            fetch('http://172.16.5.5:8082/auth/register', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json'
-                },
-                body: JSON.stringify({ username, role, password })
-            })
-                .then(response => response.text())
-                .then(data => {
-                    if (data === 'success') {
-                        alert('Пользователь добавлен');
-                        window.location.href = '/index';
-                    } else {
-                        alert(data)
-                    }
-                })
-                .catch(error => console.error('Error:', error));
+            notify.textContent = '';
+            notify.className = 'notify';
+
+            try {
+                const res  = await fetch('/auth/register', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ username, role, password })
+                });
+                const data = await res.text();
+
+                if (data === 'success') {
+                    notify.textContent = '✓ Оператор успешно создан';
+                    notify.classList.add('notify--success');
+                    event.target.reset();
+                    document.querySelector('#username').focus();
+                } else {
+                    notify.textContent = data;
+                }
+            } catch (err) {
+                notify.textContent = 'Ошибка соединения с сервером';
+                console.error(err);
+            }
         }
     </script>
 </body>
-
 </html>

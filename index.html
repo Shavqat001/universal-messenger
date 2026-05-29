@@ -185,10 +185,6 @@
 
     <main class="page__main">
         <aside class="page__settings">
-            <div class="page__theme">
-                <span>theme</span>
-            </div>
-
             <h2 class="page__settings_user-name"></h2>
             <p class="page__settings-operator-role">Оператор</p>
 
@@ -230,11 +226,16 @@
             </div>
 
             <form class="messages__form visually-hidden" action="">
+                <input class="messages__file-input visually-hidden" type="file" accept="image/*,video/*,audio/*,.pdf,.doc,.docx,.xls,.xlsx,.txt,.zip,.rar">
+                <div class="messages__file-preview visually-hidden">
+                    <span class="messages__file-preview-name"></span>
+                    <button type="button" class="messages__file-preview-remove">✕</button>
+                </div>
                 <div class="messages__field_text">
-                    <svg width="24" height="24" title="Временоо недоступно">
-                        <use xlink:href="#attachment"></use>
-                    </svg>
-                    <input class="messages__input" type="text" placeholder="Write a message...">
+                    <button type="button" class="messages__attachment-btn" title="Прикрепить файл">
+                        <svg width="20" height="20"><use xlink:href="#attachment"></use></svg>
+                    </button>
+                    <input class="messages__input" type="text" placeholder="Написать сообщение...">
                 </div>
 
                 <div class="messages__smile-icons">
@@ -267,7 +268,6 @@
                 </button>
             </form>
 
-            <button class="messages__release-client visually-hidden">Не хочу обслуживать</button>
 
             <div class="messages__black-layer"></div>
         </section>
